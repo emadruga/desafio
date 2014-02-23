@@ -1,6 +1,4 @@
-import sys
 import re
-import urllib,os
 class myUtilities:
 	def price_float(self,text):
 		price = -99.0
