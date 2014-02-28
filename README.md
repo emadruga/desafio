@@ -12,15 +12,18 @@ Price:   +3999.00
 --- Level 3 ---
 
 parabens! Voce ganhou um mini system de R$ 499,00
+
 Price:    +499.00
 
 --- Level 4 ---
 
 Preco atual = R$ 4 5 0 ,0 0
+
 Price:    +450.00
 
 --- Level 5 ---
 
 Ok, mais um preco pra voce!!! R$ 40 0,0 0
+
 Price:    +400.00
 
