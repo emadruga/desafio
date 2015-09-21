@@ -20,6 +20,7 @@ class Parser:
     def __init__(self, **kw):
         self.debug = kw.get('debug', 0)
         self.names = { }
+        self.filename = kw.get('filename',0)
         try:
             modname = os.path.split(os.path.splitext(__file__)[0])[1] + "_" + self.__class__.__name__
         except:
@@ -37,13 +38,15 @@ class Parser:
 
     def run(self):
         attribList = None
-        with open('./planilhas/sample-utf8.txt') as fp:
+        with open(self.filename) as fp:
             for line in fp:
+                line.rstrip('\n')
                 #remove accents - input to normalize must be unicode
                 unicode_line  = line.decode('utf8')
                 nfkd_line     = unicodedata.normalize('NFKD',unicode_line)
                 ascii_line    = nfkd_line.encode('ASCII', 'ignore')
-                print "\n%r" % line
+                print "------------------"
+                print "%s" % line
                 attribList = yacc.parse(ascii_line.lower())
                 print attribList
 
@@ -57,22 +60,21 @@ class Attribute(object):
 class ProductParser(Parser):
     tokens = (
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
-        'ATTRIB','NUMBER','FLOAT','SEP','NAME', 'LOCK',
-        'MEGAPIXELS',
+        'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED',
+        'MEGAPIXELS', 'MP3',
+        #'COMMON_MODEL_SAMSUNG', 'COMMON_MODEL_SONY',
         ) 
 
     # Tokens
-
+    
     t_SEP          = r'[\-\,\/]' 
-    t_NAME         = r'[a-zA-Z]+'
     t_ATTRIB       = r'[a-zA-Z_][a-zA-Z0-9_]*'
-    t_MEGAPIXELS   = r'mp'
     
     def t_COLOR(self,t):
-        r'azul|branco|preto|dourado|titanio|verde|vermelho|rosa'
+        r'azul|branco|preto|dourado|titanio|verde|grafite|vermelho|rosa'
         return t
 
-    def t_LOCK(self,t):
+    def t_UNLOCKED(self,t):
         r'desbloqueado'
         return t
 
@@ -80,16 +82,32 @@ class ProductParser(Parser):
         r'3g|4g'
         return t
 
+    def t_MEGAPIXELS(self,t):
+        r'mp|megapixels'
+        return t
+
+    def t_MP3(self,t):
+        r'mp3|mp3\s+player'
+        return t
+         
     def t_NUMCHIP(self,t):
         r'dual\s+chip|tri\s+chip|quad\s+chip'
         return t
-    
+
+    # def t_COMMON_MODEL_SAMSUNG(self,t):
+    #     r'galaxy'
+    #     return t
+
+    # def t_COMMON_MODEL_SONY(self,t):
+    #     r'xperia'
+    #     return t
+        
     def t_PRODUCT(self,t):
-        r'smartphone|smart\s+tv|capa\s+protetora|viva[\-\s]voz'
+        r'smartphone|smart\s+tv|capa|viva[\-\s]voz|suporte|pen[ \-]drive|celular|controle|camera|fone|kit|monofone|carregador|bracadeira|joystick|cabo|bastao'
         return t
     
     def t_BRAND(self,t):
-        r'samsung|nokia|lg|sony\s+ericsson|sony|microsoft'
+        r'samsung|huawei|nokia|lg|sony\s+ericsson|positivo|sony|microsoft|motorola|asus|alcatel|multilaser'
         return t
 
     def t_FLOAT(self, t):
@@ -111,7 +129,6 @@ class ProductParser(Parser):
         t.lexer.skip(1)
 
     # Parsing rules
-
     # precedence = (
     #     ('left','PLUS','MINUS'),
     #     ('left','TIMES','DIVIDE'),
@@ -121,20 +138,47 @@ class ProductParser(Parser):
 
     def p_statement(self, p):
         'statement : PRODUCT product_id attribute_list'
-        #  "Product: %s" % p[1]
         p[0] = [ Attribute('product', p[1]) ] 
         if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
             p[0] = p[0] + p[2]
         if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
             p[0] = p[0] + p[3]
 
+    def p_statement_unlocked(self, p):
+        'statement : PRODUCT UNLOCKED product_id attribute_list'
+        p[0] = [ Attribute('product', p[1]), Attribute('unlocked', 1) ] 
+        if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
+            p[0] = p[0] + p[3]
+        if isinstance(p[4],(list,tuple)) and len(p[4]) > 0:
+            p[0] = p[0] + p[4]
+
+    ## def p_statement_common_models(self, p):
+    ##     'statement : PRODUCT common_models attribute_list'
+    ##     p[0] = [ Attribute('product', p[1]) ] 
+    ##     if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
+    ##         p[0] = p[0] + p[2]
+    ##     if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
+    ##         p[0] = p[0] + p[3]
+
+    ## def p_common_models_samsung(self, p):
+    ##     """
+    ##     common_models : COMMON_MODEL_SAMSUNG
+    ##     """
+    ##     p[0] =  [ Attribute('brand', 'samsung'), Attribute('model', p[1]) ]
+
+    ## def p_common_models_sony(self, p):
+    ##     """
+    ##     common_models : COMMON_MODEL_SONY
+    ##     """
+    ##     p[0] =  [ Attribute('brand', 'sony'), Attribute('model', p[1]) ]
+
     def p_product_id(self, p):
         """
         product_id : BRAND ATTRIB ATTRIB attribute_list
+                   | BRAND ATTRIB attribute_list
                    |
         """
         if len(p) == 5:
-            myId = "%s %s" % (p[2],p[3])
             p[0] = [
                      Attribute('brand', p[1]),
                      Attribute('model', p[2]),
@@ -142,6 +186,14 @@ class ProductParser(Parser):
             ] 
             if isinstance(p[4],(list,tuple)) and len(p[4]) > 0:
                 p[0] += p[4]
+        elif len(p) == 4:
+            p[0] = [
+                     Attribute('brand', p[1]),
+                     Attribute('model', p[2]),
+            ] 
+            if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
+                p[0] += p[3]
+            
 
 
     def p_attribute_list(self, p):
@@ -219,10 +271,23 @@ class ProductParser(Parser):
 
     def p_attribute_lock(self, p):
         """
-        attribute : LOCK
+        attribute : UNLOCKED
         """
-        p[0] = Attribute('lock', 1)
-        
+        p[0] = Attribute('unlocked', 1)
+
+    def p_attribute_mp3_player(self, p):
+        """
+        attribute : MP3
+        """
+        p[0] = Attribute('mp3_player', 1)
+
+    ## def p_attribute_common_models(self, p):
+    ##     """
+    ##     attribute : COMMON_MODEL_SAMSUNG
+    ##               | COMMON_MODEL_SONY
+    ##     """
+    ##     p[0] = Attribute('model', p[1])
+
         
     def p_attribute_brand(self, p):
         """
@@ -230,11 +295,11 @@ class ProductParser(Parser):
         """
         p[0] = Attribute('brand', p[1])
 
-    # def p_attribute_product(self, p):
-    #     """
-    #     attribute : PRODUCT
-    #     """
-    #     print "Product: %s" % p[1]
+    def p_attribute_product(self, p):
+        """
+        attribute : PRODUCT
+        """
+        p[0] = Attribute('product', p[1])
 
     def p_error(self, p):
         if p:
@@ -243,6 +308,10 @@ class ProductParser(Parser):
             print("Syntax error at EOF")
 
 if __name__ == '__main__':
-    prod = ProductParser(debug = 0)
+
+    file = './planilhas/sample-utf8.txt'
+    if len(sys.argv) > 1:
+        file = sys.argv[1]
+    prod = ProductParser(debug = 0, filename = file)
     prod.run()
     
