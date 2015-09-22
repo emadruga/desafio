@@ -10,6 +10,15 @@ import ply.lex as lex
 import ply.yacc as yacc
 import os
 
+
+class Attribute(object):
+    def __init__(self, type, value):
+        self.type  = type
+        self.value = value
+    def __repr__(self):
+        return "a(%r, %r)" % (self.type, self.value)
+
+    
 class Parser:
     """
     Base class for a lexer/parser that has the rules defined as methods
@@ -35,7 +44,11 @@ class Parser:
                   debug=self.debug,
                   debugfile=self.debugfile,
                   tabmodule=self.tabmodule)
-
+        
+    def processList(self, list):
+        for attrib in list:
+            print attrib
+            
     def run(self):
         attribList = None
         with open(self.filename) as fp:
@@ -47,16 +60,17 @@ class Parser:
                 ascii_line    = nfkd_line.encode('ASCII', 'ignore')
                 print "------------------"
                 print "%s" % line
-                attribList = yacc.parse(ascii_line.lower())
-                print attribList
+                try:
+                    attribList = yacc.parse(ascii_line.lower())
+                    self.processList (attribList)
+                    
+                except TypeError as e:
+                    print ">>> %s" % e
+                    self.processList (attribList)
+                except SyntaxError as e:
+                    print ">>> %s" % e
 
-class Attribute(object):
-    def __init__(self, type, value):
-        self.type  = type
-        self.value = value
-    def __repr__(self):
-        return "a(%r, %r)" % (self.type, self.value)
-                
+
 class ProductParser(Parser):
     tokens = (
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
@@ -105,7 +119,7 @@ class ProductParser(Parser):
          return t
         
     def t_COMMON_MODEL_MOTOROLA(self,t):
-         r'moto'
+         r'moto\b'
          return t
 
     def t_PRODUCT(self,t):
@@ -131,8 +145,8 @@ class ProductParser(Parser):
         t.lexer.lineno += t.value.count("\n")
     
     def t_error(self, t):
-        print("Illegal character '%s'" % t.value[0])
         t.lexer.skip(1)
+        raise TypeError ("Illegal character '%s'" % t.value[0])
 
     # Parsing rules
     # precedence = (
@@ -160,38 +174,29 @@ class ProductParser(Parser):
 
     def p_product_id(self, p):
         """
-        product_id : BRAND ATTRIB ATTRIB attribute_list
-                   | BRAND ATTRIB attribute_list
-                   | BRAND common_models attribute_list
+        product_id : BRAND ATTRIB attribute_list
+                   
         """
-        if len(p) == 5:
-            p[0] = [
-                     Attribute('brand', p[1]),
-                     Attribute('model', p[2]),
-                     Attribute('model_number', p[3]),
-            ] 
-            if isinstance(p[4],(list,tuple)) and len(p[4]) > 0:
-                p[0] += p[4]
-        elif len(p) == 4:
-            p[0] = [
-                     Attribute('brand', p[1]),
-                     Attribute('model', p[2]),
-            ] 
-            if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
-                p[0] += p[3]
-            
-        elif len(p) == 3:
-            p[0] = [
-                     Attribute('model', p[1]),
-                ] 
-            if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
-                p[0] += p[2]
+        p[0] = [
+            Attribute('brand', p[1]),
+            Attribute('model', p[2]),
+        ] 
+        if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
+            p[0] += p[3]
             
     def p_product_id_common_models(self, p):
         """
-        product_id :  common_models attribute_list
+        product_id :   BRAND common_models attribute_list
+                   |   common_models attribute_list
         """
-        p[0] = p[1] + p[2]
+        if len(p) == 3:
+            p[0] = p[1]
+            if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
+                p[0] += p[2]
+        elif len(p) == 4:
+            p[0] = p[2]
+            if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
+                p[0] += p[3]
 
     def p_common_models_samsung(self, p):
         """
@@ -317,9 +322,9 @@ class ProductParser(Parser):
 
     def p_error(self, p):
         if p:
-            print("Syntax error at '%s'" % p.value)
+            raise SyntaxError ("Syntax error at '%s'" % p.value)
         else:
-            print("Syntax error at EOF")
+            raise SyntaxError ("Syntax error at EOF")
 
 if __name__ == '__main__':
 
