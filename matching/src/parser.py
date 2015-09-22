@@ -62,13 +62,12 @@ class Parser:
                 print "%s" % line
                 try:
                     attribList = yacc.parse(ascii_line.lower())
-                    self.processList (attribList)
                     
                 except TypeError as e:
                     print ">>> %s" % e
-                    self.processList (attribList)
                 except SyntaxError as e:
                     print ">>> %s" % e
+                self.processList (attribList)
 
 
 class ProductParser(Parser):
