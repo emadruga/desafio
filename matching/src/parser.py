@@ -62,7 +62,9 @@ class ProductParser(Parser):
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED',
         'MEGAPIXELS', 'MP3',
-        #'COMMON_MODEL_SAMSUNG', 'COMMON_MODEL_SONY',
+        'COMMON_MODEL_SAMSUNG',
+        'COMMON_MODEL_SONY',
+        'COMMON_MODEL_MOTOROLA',
         ) 
 
     # Tokens
@@ -94,14 +96,18 @@ class ProductParser(Parser):
         r'dual\s+chip|tri\s+chip|quad\s+chip'
         return t
 
-    # def t_COMMON_MODEL_SAMSUNG(self,t):
-    #     r'galaxy'
-    #     return t
+    def t_COMMON_MODEL_SAMSUNG(self,t):
+        r'galaxy'
+        return t
 
-    # def t_COMMON_MODEL_SONY(self,t):
-    #     r'xperia'
-    #     return t
+    def t_COMMON_MODEL_SONY(self,t):
+         r'xperia'
+         return t
         
+    def t_COMMON_MODEL_MOTOROLA(self,t):
+         r'moto'
+         return t
+
     def t_PRODUCT(self,t):
         r'smartphone|smart\s+tv|capa|viva[\-\s]voz|suporte|pen[ \-]drive|celular|controle|camera|fone|kit|monofone|carregador|bracadeira|joystick|cabo|bastao'
         return t
@@ -152,31 +158,11 @@ class ProductParser(Parser):
         if isinstance(p[4],(list,tuple)) and len(p[4]) > 0:
             p[0] = p[0] + p[4]
 
-    ## def p_statement_common_models(self, p):
-    ##     'statement : PRODUCT common_models attribute_list'
-    ##     p[0] = [ Attribute('product', p[1]) ] 
-    ##     if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
-    ##         p[0] = p[0] + p[2]
-    ##     if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
-    ##         p[0] = p[0] + p[3]
-
-    ## def p_common_models_samsung(self, p):
-    ##     """
-    ##     common_models : COMMON_MODEL_SAMSUNG
-    ##     """
-    ##     p[0] =  [ Attribute('brand', 'samsung'), Attribute('model', p[1]) ]
-
-    ## def p_common_models_sony(self, p):
-    ##     """
-    ##     common_models : COMMON_MODEL_SONY
-    ##     """
-    ##     p[0] =  [ Attribute('brand', 'sony'), Attribute('model', p[1]) ]
-
     def p_product_id(self, p):
         """
         product_id : BRAND ATTRIB ATTRIB attribute_list
                    | BRAND ATTRIB attribute_list
-                   |
+                   | BRAND common_models attribute_list
         """
         if len(p) == 5:
             p[0] = [
@@ -194,7 +180,36 @@ class ProductParser(Parser):
             if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
                 p[0] += p[3]
             
+        elif len(p) == 3:
+            p[0] = [
+                     Attribute('model', p[1]),
+                ] 
+            if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
+                p[0] += p[2]
+            
+    def p_product_id_common_models(self, p):
+        """
+        product_id :  common_models attribute_list
+        """
+        p[0] = p[1] + p[2]
 
+    def p_common_models_samsung(self, p):
+        """
+        common_models : COMMON_MODEL_SAMSUNG
+        """
+        p[0] =  [ Attribute('brand', 'samsung'), Attribute('model', p[1]) ]
+
+    def p_common_models_sony(self, p):
+        """
+        common_models : COMMON_MODEL_SONY
+        """
+        p[0] =  [ Attribute('brand', 'sony'), Attribute('model', p[1]) ]
+
+    def p_common_models_motorola(self, p):
+        """
+        common_models : COMMON_MODEL_MOTOROLA
+        """
+        p[0] =  [ Attribute('brand', 'motorola'), Attribute('model', p[1]) ]
 
     def p_attribute_list(self, p):
         """
@@ -281,14 +296,13 @@ class ProductParser(Parser):
         """
         p[0] = Attribute('mp3_player', 1)
 
-    ## def p_attribute_common_models(self, p):
-    ##     """
-    ##     attribute : COMMON_MODEL_SAMSUNG
-    ##               | COMMON_MODEL_SONY
-    ##     """
-    ##     p[0] = Attribute('model', p[1])
-
-        
+    def p_attribute_common_models(self, p):
+        """
+        attribute : COMMON_MODEL_SAMSUNG
+                  | COMMON_MODEL_SONY
+        """
+        p[0] = Attribute('model', p[1])
+    
     def p_attribute_brand(self, p):
         """
         attribute : BRAND
