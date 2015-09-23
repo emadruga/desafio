@@ -74,8 +74,8 @@ class Parser:
 class ProductParser(Parser):
     tokens = (
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
-        'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED',
-        'MEGAPIXELS', 'MP3','INCHES',
+        'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED','GIGABYTES',
+        'MEGAPIXELS', 'MP3','INCHES','PROVIDER','OS_NAME',
         'COMMON_MODEL_SAMSUNG',
         'COMMON_MODEL_SONY',
         'COMMON_MODEL_MOTOROLA',
@@ -83,8 +83,9 @@ class ProductParser(Parser):
 
     # Tokens
     
-    t_SEP          = r'[\-\,\/\|\:\.]' 
+    t_SEP          = r'[\-\,\/\|\:\.\+]' 
     t_INCHES       = r'[\"]' 
+    t_GIGABYTES    = r'gb\b' 
     t_ATTRIB       = r'[a-zA-Z_][a-zA-Z0-9_]*'
     
     def t_COLOR(self,t):
@@ -106,9 +107,18 @@ class ProductParser(Parser):
     def t_MP3(self,t):
         r'mp3|mp3\s+player'
         return t
-         
+
+    def t_PROVIDER(self,t):
+        r'\bclaro\b|\boi\b|\btim\b|\bvivo\b'
+        return t
+
+    
     def t_NUMCHIP(self,t):
         r'dual\s+chip|tri\s+chip|quad\s+chip'
+        return t
+
+    def t_OS_NAME(self,t):
+        r'android|windows\s+phone|windows'
         return t
 
     def t_COMMON_MODEL_SAMSUNG(self,t):
@@ -158,20 +168,47 @@ class ProductParser(Parser):
     #     )
 
     def p_statement(self, p):
-        'statement : PRODUCT product_id attribute_list'
+        'statement : PRODUCT  product_prefix_list product_id attribute_list'
         p[0] = [ Attribute('product', p[1]) ] 
         if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
             p[0] = p[0] + p[2]
         if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
             p[0] = p[0] + p[3]
-
-    def p_statement_unlocked(self, p):
-        'statement : PRODUCT UNLOCKED product_id attribute_list'
-        p[0] = [ Attribute('product', p[1]), Attribute('unlocked', 1) ] 
-        if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
-            p[0] = p[0] + p[3]
         if isinstance(p[4],(list,tuple)) and len(p[4]) > 0:
             p[0] = p[0] + p[4]
+
+    def p_product_prefix_list(self, p):
+        """
+        product_prefix_list :  product_prefix_list product_prefix
+                            |  product_prefix
+                            |
+        """
+        if len(p) == 2:
+            if len([ p[1] ]) > 0:
+                p[0] = [ p[1] ]
+        elif  len(p) == 3:
+            p[0] = p[1] 
+            if len([ p[2] ]) > 0:
+                p[0] += [ p[2] ]
+
+    def p_product_prefix_unlocked(self, p):
+        """
+        product_prefix : UNLOCKED           
+        """
+        p[0] = Attribute('unlocked', 1)
+
+        
+    def p_product_prefix_numchip(self, p):
+        """
+        product_prefix : NUMCHIP           
+        """
+        p[0] = Attribute('numchip', p[1])
+
+    def p_product_prefix_provider(self, p):
+        """
+        product_prefix : PROVIDER          
+        """
+        p[0] = Attribute('provider', p[1])
 
     def p_product_id(self, p):
         """
@@ -278,6 +315,26 @@ class ProductParser(Parser):
                           | FLOAT  MEGAPIXELS
         """
         p[0] = Attribute('camera_resolution', p[1])
+
+    def p_attribute_operating_system(self, p):
+        """
+        attribute  : OS_NAME NUMBER
+                   | OS_NAME FLOAT
+        """
+        p[0] = Attribute('operating_system', p[1])
+
+    def p_attribute_storage(self, p):
+        """
+        attribute  :  NUMBER GIGABYTES
+                   |  FLOAT GIGABYTES
+        """
+        p[0] = Attribute('storage', p[1])
+
+    def p_attribute_provider(self, p):
+        """
+        attribute : PROVIDER          
+        """
+        p[0] = Attribute('provider', p[1])
 
     def p_attribute_tech(self, p):
         """
