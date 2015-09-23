@@ -1,5 +1,7 @@
 - common models: galaxy, xperia, moto
 - blu
+- Tela 5.1"
+- double 'model'
 - "Smartphone Dual Chip .*" 
 - model_number heuristic
 - 3GB
