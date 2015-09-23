@@ -62,19 +62,20 @@ class Parser:
                 print "%s" % line
                 try:
                     attribList = yacc.parse(ascii_line.lower())
+                    #self.processList (attribList)
+                    print attribList
                     
                 except TypeError as e:
                     print ">>> %s" % e
                 except SyntaxError as e:
                     print ">>> %s" % e
-                self.processList (attribList)
 
 
 class ProductParser(Parser):
     tokens = (
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED',
-        'MEGAPIXELS', 'MP3',
+        'MEGAPIXELS', 'MP3','INCHES',
         'COMMON_MODEL_SAMSUNG',
         'COMMON_MODEL_SONY',
         'COMMON_MODEL_MOTOROLA',
@@ -83,6 +84,7 @@ class ProductParser(Parser):
     # Tokens
     
     t_SEP          = r'[\-\,\/]' 
+    t_INCHES       = r'[\"]' 
     t_ATTRIB       = r'[a-zA-Z_][a-zA-Z0-9_]*'
     
     def t_COLOR(self,t):
@@ -126,7 +128,7 @@ class ProductParser(Parser):
         return t
     
     def t_BRAND(self,t):
-        r'samsung|huawei|nokia|lg|sony\s+ericsson|positivo|sony|microsoft|motorola|asus|alcatel|multilaser'
+        r'samsung|huawei|nokia|lg|sony\s+ericsson|positivo|sony|microsoft|motorola|asus|alcatel|multilaser|\bblu\b'
         return t
 
     def t_FLOAT(self, t):
@@ -263,6 +265,13 @@ class ProductParser(Parser):
         """
         p[0] = p[1]
 
+    def p_attribute_screen_diagonal(self, p):
+        """
+        attribute    : NUMBER INCHES
+                     | FLOAT  INCHES
+        """
+        p[0] = Attribute('screen_diagonal', p[1])
+        
     def p_attribute_camera_resolution(self, p):
         """
         camera_resolution : NUMBER MEGAPIXELS
