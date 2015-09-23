@@ -1,6 +1,7 @@
 - common models: galaxy, xperia, moto
 - blu
 - "Smartphone Dual Chip .*" 
+- model_number heuristic
 - 3GB
 - Android 4.0/Windows Phone/Windows
 
