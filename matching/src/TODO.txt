@@ -1,9 +1,9 @@
-- common models: galaxy, xperia, moto
-- blu
-- Tela 5.1"
-- double 'model'
+x common models: galaxy, xperia, moto
+x brand -> blu
+x Tela 5.1"
 - "Smartphone Dual Chip .*" 
+- double 'model'
 - model_number heuristic
-- 3GB
-- Android 4.0/Windows Phone/Windows
+- storage -> 3GB
+- operating system -> Android 4.0/Windows Phone/Windows
 
