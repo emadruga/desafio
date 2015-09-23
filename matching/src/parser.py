@@ -83,7 +83,7 @@ class ProductParser(Parser):
 
     # Tokens
     
-    t_SEP          = r'[\-\,\/]' 
+    t_SEP          = r'[\-\,\/\|\:\.]' 
     t_INCHES       = r'[\"]' 
     t_ATTRIB       = r'[a-zA-Z_][a-zA-Z0-9_]*'
     
@@ -313,6 +313,7 @@ class ProductParser(Parser):
         """
         attribute : COMMON_MODEL_SAMSUNG
                   | COMMON_MODEL_SONY
+                  | COMMON_MODEL_MOTOROLA
         """
         p[0] = Attribute('model', p[1])
     
