@@ -1,25 +1,46 @@
-import sys
+import sys,re
 import unicodedata
-
-sys.path.insert(0,"../..")
-
-if sys.version_info[0] >= 3:
-    raw_input = input
-
 import ply.lex as lex
 import ply.yacc as yacc
 import os
 
+class ParserException(Exception):
+    """Exception related to the web service."""
 
-class Attribute(object):
-    def __init__(self, type, value):
-        self.type  = type
-        self.value = value
+    def __init__(self, type, message):
+        self._type = type
+        self._message = message
+
+    def __str__(self):
+        return self._type + ': ' + self._message
+
+    def get_message(self):
+        return self._message
+
+    def get_type(self):
+        return self._type
+
+class ProductAttribute(object):
+    def __init__(self, t, v):
+        self._atype  = t
+        self._avalue = v
+
     def __repr__(self):
-        return "a(%r, %r)" % (self.type, self.value)
-
+        return "a(%r, %r)" % (self._atype, self._avalue)
     
-class Parser:
+    def get_type(self):
+        return self._atype
+
+    def get_value(self):
+        return self._avalue
+
+    def set_type(self, t):
+        self._atype = t
+
+    def set_value(self, v):
+        self._avalue = v
+
+class Parser(object):
     """
     Base class for a lexer/parser that has the rules defined as methods
     """
@@ -36,6 +57,9 @@ class Parser:
             modname = "parser"+"_"+self.__class__.__name__
         self.debugfile = modname + ".dbg"
         self.tabmodule = modname + "_" + "parsetab"
+        self.countProductLine = 0
+        self.countModel       = 0
+
         #print self.debugfile, self.tabmodule
 
         # Build the lexer and parser
@@ -47,7 +71,10 @@ class Parser:
         
     def processList(self, list):
         for attrib in list:
-            print attrib
+            if isinstance(attrib,ProductAttribute):
+                type  = attrib.get_type()
+                value = attrib.get_value()
+                print "a[t: %s, v: %s]" % (type, value)
             
     def run(self):
         attribList = None
@@ -62,30 +89,25 @@ class Parser:
                 print "%s" % line
                 try:
                     attribList = yacc.parse(ascii_line.lower())
-                    #self.processList (attribList)
-                    print attribList
+                    self.processList (attribList)
                     
-                except TypeError as e:
-                    print ">>> %s" % e
-                except SyntaxError as e:
-                    print ">>> %s" % e
-
+                except ParserException as e:
+                    print e
 
 class ProductParser(Parser):
     tokens = (
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED','GIGABYTES',
         'MEGAPIXELS', 'MP3','INCHES','PROVIDER','OS_NAME',
-        'COMMON_MODEL_SAMSUNG',
-        'COMMON_MODEL_SONY',
-        'COMMON_MODEL_MOTOROLA',
+        'COMMON_PRODUCT_LINE_SAMSUNG',
+        'COMMON_PRODUCT_LINE_SONY',
+        'COMMON_PRODUCT_LINE_MOTOROLA',
         ) 
 
     # Tokens
     
     t_SEP          = r'[\-\,\/\|\:\.\+]' 
     t_INCHES       = r'[\"]' 
-    t_GIGABYTES    = r'gb\b' 
     t_ATTRIB       = r'[a-zA-Z_][a-zA-Z0-9_]*'
     
     def t_COLOR(self,t):
@@ -98,6 +120,10 @@ class ProductParser(Parser):
 
     def t_TECHNOLOGY(self,t):
         r'3g|4g'
+        return t
+
+    def t_GIGABYTES(self,t):
+        r'gb\b'
         return t
 
     def t_MEGAPIXELS(self,t):
@@ -121,15 +147,15 @@ class ProductParser(Parser):
         r'android|windows\s+phone|windows'
         return t
 
-    def t_COMMON_MODEL_SAMSUNG(self,t):
+    def t_COMMON_PRODUCT_LINE_SAMSUNG(self,t):
         r'galaxy'
         return t
 
-    def t_COMMON_MODEL_SONY(self,t):
+    def t_COMMON_PRODUCT_LINE_SONY(self,t):
          r'xperia'
          return t
         
-    def t_COMMON_MODEL_MOTOROLA(self,t):
+    def t_COMMON_PRODUCT_LINE_MOTOROLA(self,t):
          r'moto\b'
          return t
 
@@ -157,7 +183,8 @@ class ProductParser(Parser):
     
     def t_error(self, t):
         t.lexer.skip(1)
-        raise TypeError ("Illegal character '%s'" % t.value[0])
+        raise ParserException (type    = 'Lexical Exception',
+                               message ="Illegal character '%s'" % t.value[0])
 
     # Parsing rules
     # precedence = (
@@ -169,7 +196,7 @@ class ProductParser(Parser):
 
     def p_statement(self, p):
         'statement : PRODUCT  product_prefix_list product_id attribute_list'
-        p[0] = [ Attribute('product', p[1]) ] 
+        p[0] = [ ProductAttribute('product', p[1]) ] 
         if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
             p[0] = p[0] + p[2]
         if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
@@ -195,20 +222,20 @@ class ProductParser(Parser):
         """
         product_prefix : UNLOCKED           
         """
-        p[0] = Attribute('unlocked', 1)
+        p[0] = ProductAttribute('unlocked', 1)
 
         
     def p_product_prefix_numchip(self, p):
         """
         product_prefix : NUMCHIP           
         """
-        p[0] = Attribute('numchip', p[1])
+        p[0] = ProductAttribute('numchip', p[1])
 
     def p_product_prefix_provider(self, p):
         """
         product_prefix : PROVIDER          
         """
-        p[0] = Attribute('provider', p[1])
+        p[0] = ProductAttribute('provider', p[1])
 
     def p_product_id(self, p):
         """
@@ -216,16 +243,16 @@ class ProductParser(Parser):
                    
         """
         p[0] = [
-            Attribute('brand', p[1]),
-            Attribute('model', p[2]),
+            ProductAttribute('brand', p[1]),
+            ProductAttribute('product_line', p[2]),
         ] 
         if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
             p[0] += p[3]
             
-    def p_product_id_common_models(self, p):
+    def p_product_id_common_product_lines(self, p):
         """
-        product_id :   BRAND common_models attribute_list
-                   |   common_models attribute_list
+        product_id :   BRAND common_product_lines attribute_list
+                   |   common_product_lines attribute_list
         """
         if len(p) == 3:
             p[0] = p[1]
@@ -236,23 +263,23 @@ class ProductParser(Parser):
             if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
                 p[0] += p[3]
 
-    def p_common_models_samsung(self, p):
+    def p_common_product_lines_samsung(self, p):
         """
-        common_models : COMMON_MODEL_SAMSUNG
+        common_product_lines : COMMON_PRODUCT_LINE_SAMSUNG
         """
-        p[0] =  [ Attribute('brand', 'samsung'), Attribute('model', p[1]) ]
+        p[0] =  [ ProductAttribute('brand', 'samsung'), ProductAttribute('product_line', p[1]) ]
 
-    def p_common_models_sony(self, p):
+    def p_common_product_lines_sony(self, p):
         """
-        common_models : COMMON_MODEL_SONY
+        common_product_lines : COMMON_PRODUCT_LINE_SONY
         """
-        p[0] =  [ Attribute('brand', 'sony'), Attribute('model', p[1]) ]
+        p[0] =  [ ProductAttribute('brand', 'sony'), ProductAttribute('product_line', p[1]) ]
 
-    def p_common_models_motorola(self, p):
+    def p_common_product_lines_motorola(self, p):
         """
-        common_models : COMMON_MODEL_MOTOROLA
+        common_product_lines : COMMON_PRODUCT_LINE_MOTOROLA
         """
-        p[0] =  [ Attribute('brand', 'motorola'), Attribute('model', p[1]) ]
+        p[0] =  [ ProductAttribute('brand', 'motorola'), ProductAttribute('product_line', p[1]) ]
 
     def p_attribute_list(self, p):
         """
@@ -286,7 +313,7 @@ class ProductParser(Parser):
         """
         attribute : ATTRIB
         """
-        p[0] = Attribute('generic', p[1])
+        p[0] = ProductAttribute('generic', p[1])
 
         
     def p_attribute_number_rep(self, p):
@@ -294,7 +321,7 @@ class ProductParser(Parser):
         attribute : NUMBER
                   | FLOAT
         """
-        p[0] = Attribute('generic_num', p[1])
+        p[0] = ProductAttribute('generic_num', p[1])
 
     def p_attribute_camera(self, p):
         """
@@ -307,91 +334,124 @@ class ProductParser(Parser):
         attribute    : NUMBER INCHES
                      | FLOAT  INCHES
         """
-        p[0] = Attribute('screen_diagonal', p[1])
+        p[0] = ProductAttribute('screen_diagonal', p[1])
         
     def p_attribute_camera_resolution(self, p):
         """
         camera_resolution : NUMBER MEGAPIXELS
                           | FLOAT  MEGAPIXELS
         """
-        p[0] = Attribute('camera_resolution', p[1])
+        p[0] = ProductAttribute('camera_resolution', p[1])
 
     def p_attribute_operating_system(self, p):
         """
         attribute  : OS_NAME NUMBER
                    | OS_NAME FLOAT
         """
-        p[0] = Attribute('operating_system', p[1])
+        p[0] = ProductAttribute('operating_system', p[1])
 
     def p_attribute_storage(self, p):
         """
         attribute  :  NUMBER GIGABYTES
-                   |  FLOAT GIGABYTES
         """
-        p[0] = Attribute('storage', p[1])
+        p[0] = ProductAttribute('storage', p[1])
 
     def p_attribute_provider(self, p):
         """
         attribute : PROVIDER          
         """
-        p[0] = Attribute('provider', p[1])
+        p[0] = ProductAttribute('provider', p[1])
 
     def p_attribute_tech(self, p):
         """
         attribute : TECHNOLOGY
         """
-        p[0] = Attribute('technology', p[1])
+        p[0] = ProductAttribute('technology', p[1])
 
     def p_attribute_numchip(self, p):
         """
         attribute : NUMCHIP
         """
-        p[0] = Attribute('numchip', p[1])
+        p[0] = ProductAttribute('numchip', p[1])
 
     def p_attribute_color(self, p):
         """
         attribute : COLOR
         """
-        p[0] = Attribute('color', p[1])
+        p[0] = ProductAttribute('color', p[1])
 
     def p_attribute_lock(self, p):
         """
         attribute : UNLOCKED
         """
-        p[0] = Attribute('unlocked', 1)
+        p[0] = ProductAttribute('unlocked', 1)
 
     def p_attribute_mp3_player(self, p):
         """
         attribute : MP3
         """
-        p[0] = Attribute('mp3_player', 1)
+        p[0] = ProductAttribute('mp3_player', 1)
 
-    def p_attribute_common_models(self, p):
+    def p_attribute_common_product_lines(self, p):
         """
-        attribute : COMMON_MODEL_SAMSUNG
-                  | COMMON_MODEL_SONY
-                  | COMMON_MODEL_MOTOROLA
+        attribute : COMMON_PRODUCT_LINE_SAMSUNG
+                  | COMMON_PRODUCT_LINE_SONY
+                  | COMMON_PRODUCT_LINE_MOTOROLA
         """
-        p[0] = Attribute('model', p[1])
+        p[0] = ProductAttribute('product_line', p[1])
     
     def p_attribute_brand(self, p):
         """
         attribute : BRAND
         """
-        p[0] = Attribute('brand', p[1])
+        p[0] = ProductAttribute('brand', p[1])
 
     def p_attribute_product(self, p):
         """
         attribute : PRODUCT
         """
-        p[0] = Attribute('product', p[1])
+        p[0] = ProductAttribute('product', p[1])
 
     def p_error(self, p):
         if p:
-            raise SyntaxError ("Syntax error at '%s'" % p.value)
+            raise ParserException ( type    = 'Parser Exception',
+                                    message ="Syntax error at '%s'" % p.value)
         else:
-            raise SyntaxError ("Syntax error at EOF")
+            raise ParserException ( type    = 'Parser Exception',
+                                    message ="Syntax error at EOF")
 
+    def processList(self, list):
+        # get first 'product_line' feature
+        product_line    = next((feature for feature in list if feature.get_type() == 'product_line'), None)
+        if product_line is not None:
+            # get first product_line's index
+            self.countProductLine += 1
+            product_line_ix = next(i for i, feature in enumerate(list) if feature.get_type() == 'product_line')
+            max_model_value = ""
+            count = product_line_ix
+            model_value = None
+            model_value_ix = -1
+            contains_digits = re.compile('\d')
+            for f in list[product_line_ix:]:
+                if isinstance(f,ProductAttribute) and f.get_type() in ('generic','product_line','generic_num'):
+                    value = f.get_value()
+                    # does feature value contain digits ?
+                    if bool(contains_digits.search(value)): 
+                        if (len(value) > len(max_model_value)):
+                            max_model_value = value
+                            model_value = f
+                            model_value_ix = count
+                else:
+                    break
+                count += 1
+            # print ">>> %s (%d), %s (%d)"  % (product_line,product_line_ix, model_value,model_value_ix)
+            if model_value is not None and product_line != model_value: 
+                model_value.set_type('model')
+                self.countModel += 1
+            for attrib in list:
+                if isinstance(attrib,ProductAttribute):
+                    print attrib                
+        
 if __name__ == '__main__':
 
     file = './planilhas/sample-utf8.txt'
@@ -399,4 +459,7 @@ if __name__ == '__main__':
         file = sys.argv[1]
     prod = ProductParser(debug = 0, filename = file)
     prod.run()
+    print "================"
+    print "Num Prod Lines: %d"% prod.countProductLine;
+    print "Num Models:     %d"% prod.countModel;
     
