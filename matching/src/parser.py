@@ -99,7 +99,7 @@ class ProductParser(Parser):
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED','GIGABYTES',
         'MEGAPIXELS', 'MP3','INCHES','PROVIDER','OS_NAME',
-        'COMMON_PRODUCT_LINE_SAMSUNG',
+        'COMMON_PRODUCT_LINE_SAMSUNG','SMARTPHONE',
         'COMMON_PRODUCT_LINE_SONY',
         'COMMON_PRODUCT_LINE_MOTOROLA',
         ) 
@@ -159,8 +159,12 @@ class ProductParser(Parser):
          r'moto\b'
          return t
 
+    def t_SMARTPHONE(self,t):
+         r'smartphone\b'
+         return t
+
     def t_PRODUCT(self,t):
-        r'smartphone|smart\s+tv|capa|viva[\-\s]voz|suporte|pen[ \-]drive|celular|controle|camera|fone|kit|monofone|carregador|bracadeira|joystick|cabo|bastao'
+        r'smart\s+tv|capa|viva[\-\s]voz|suporte|pen[ \-]drive|celular|controle|camera|fone|kit|fonte|monofone|carregador|bracadeira|joystick|cabo|bastao'
         return t
     
     def t_BRAND(self,t):
@@ -182,9 +186,10 @@ class ProductParser(Parser):
         t.lexer.lineno += t.value.count("\n")
     
     def t_error(self, t):
+        print "Illegal character '%s'" % t.value[0]
         t.lexer.skip(1)
-        raise ParserException (type    = 'Lexical Exception',
-                               message ="Illegal character '%s'" % t.value[0])
+        #raise ParserException (type    = 'Lexical Exception',
+        #                       message ="Illegal character '%s'" % t.value[0])
 
     # Parsing rules
     # precedence = (
@@ -194,8 +199,22 @@ class ProductParser(Parser):
     #     ('right','UMINUS'),
     #     )
 
-    def p_statement(self, p):
-        'statement : PRODUCT  product_prefix_list product_id attribute_list'
+    def p_all_products(self, p):
+        """
+        product_list : product_list product
+                     | product
+                     |
+        """
+        if len(p) == 3:
+            p[0] = p[1] + p[2]
+        elif  len(p) == 2:
+            p[0] = p[1] 
+
+    def p_prod_definition(self, p):
+        """
+         product : PRODUCT     product_prefix_list product_id attribute_list
+                 | SMARTPHONE  product_prefix_list product_id attribute_list
+        """
         p[0] = [ ProductAttribute('product', p[1]) ] 
         if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
             p[0] = p[0] + p[2]
@@ -290,7 +309,7 @@ class ProductParser(Parser):
         if len(p) == 2:
             if len([ p[1] ]) > 0:
                 p[0] = [ p[1] ]
-        elif  len(p) == 3:
+        elif len(p) == 3:
             p[0] = p[1] 
             if len([ p[2] ]) > 0:
                 p[0] += [ p[2] ]
@@ -414,25 +433,29 @@ class ProductParser(Parser):
 
     def p_error(self, p):
         if p:
-            raise ParserException ( type    = 'Parser Exception',
-                                    message ="Syntax error at '%s'" % p.value)
+            print "Syntax error at '%s'" % p.value
+           # raise ParserException ( type    = 'Parser Exception',
+           #                         message ="Syntax error at '%s'" % p.value)
         else:
-            raise ParserException ( type    = 'Parser Exception',
-                                    message ="Syntax error at EOF")
+            print "Syntax error at EOF"
+           # raise ParserException ( type    = 'Parser Exception',
+           #                         message ="Syntax error at EOF")
 
-    def processList(self, list):
+    def processList(self, attribList):
         # get first 'product_line' feature
-        product_line    = next((feature for feature in list if feature.get_type() == 'product_line'), None)
+        if not isinstance(attribList,list):
+            return
+        product_line    = next((feature for feature in attribList if feature.get_type() == 'product_line'), None)
         if product_line is not None:
             # get first product_line's index
             self.countProductLine += 1
-            product_line_ix = next(i for i, feature in enumerate(list) if feature.get_type() == 'product_line')
+            product_line_ix = next(i for i, feature in enumerate(attribList) if feature.get_type() == 'product_line')
             max_model_value = ""
             count = product_line_ix
             model_value = None
             model_value_ix = -1
             contains_digits = re.compile('\d')
-            for f in list[product_line_ix:]:
+            for f in attribList[product_line_ix:]:
                 if isinstance(f,ProductAttribute) and f.get_type() in ('generic','product_line','generic_num'):
                     value = f.get_value()
                     # does feature value contain digits ?
@@ -448,7 +471,7 @@ class ProductParser(Parser):
             if model_value is not None and product_line != model_value: 
                 model_value.set_type('model')
                 self.countModel += 1
-            for attrib in list:
+            for attrib in attribList:
                 if isinstance(attrib,ProductAttribute):
                     print attrib                
         
