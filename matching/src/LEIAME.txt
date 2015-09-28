@@ -1,9 +1,20 @@
-9747  awk '{ if (length($0) > 200 && length($0) < 300) print }' planilhas/base-smartphone-matching-utf8-unix.txt |  wc -l
- 9748  awk '{ if (length($0) > 200 && length($0) < 300) print }' planilhas/base-smartphone-matching-utf8-unix.txt |  less
- 9749  awk '{ if (length($0) > 200 && length($0) < 300) print }' planilhas/base-smartphone-matching-utf8-unix.txt > lixo5
+== Number of lines between 200 and 300 chars long
+% awk '{ if (length($0) > 200 && length($0) < 300) print }' planilhas/base-smartphone-matching-utf8-unix.txt |  wc -l
 
+== Lines longer than 500 chars
+% awk '{ if (length($0) > 500) print }' planilhas/base-smartphone-matching-utf8-unix.txt > sample-flat.txt
 
- 9733  (awk '{ if (length($0) < 500) print length($0)}' planilhas/base-smartphone-matching-utf8-unix.txt |  sort | uniq -c | awk '{print $2"@"$1}') <<EOF
- 9736  sort -n lixo5 | uniq -c | awk '{print $2"@"$1}'
- 9737  sort -n lixo5 | uniq -c | awk '{print $2" @ "$1}'
- 9831  grep -n -i syntax lixo | cut -d " " -f5| sort | uniq -c| sort -n
+== Top 10 products: frequency by name
+% cut -d " " -f1 1-sample-multiline.txt | sort | uniq -c | sort -n|tail
+   1 Tablet
+   2 Câmera
+   2 GoPro
+   2 Kit
+   2 Livro
+   3 TV
+   4 Smart
+   4 Smartphone
+   5 DVD
+   5 Game
+
+% grep -n -i syntax lixo | cut -d " " -f5| sort | uniq -c| sort -n
