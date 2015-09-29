@@ -18,7 +18,7 @@ class MatchingParser(Parser):
     t_LPAREN	   = r'\('
     t_RPAREN	   = r'\)'
     t_SEP          = r'[\-\,\/\|\:\.\+]' 
-    t_INCHES       = r'[\"]' 
+    t_INCHES       = r'[\"]|\'[\s]?\'' 
     t_ATTRIB       = r'[a-zA-Z_][a-zA-Z0-9_]*'
     
     def t_COLOR(self,t):
@@ -82,7 +82,7 @@ class MatchingParser(Parser):
          return t
 
     def t_PRODUCT(self,t):
-        r'smart\s+tv|capa|viva[\-\s]voz|suporte|pen[ \-]drive|celular|controle|camera|fone|kit|fonte|monofone|carregador|bracadeira|joystick|cabo|bastao'
+        r'smart\s+tv|console|smartphone|camera|hd|lavadora|projetor|sistema|ultrabook|xbox|caixa|game|notebook|dvd|tv\s+led|livro|kit|gopro|tablet'
         return t
     
     def t_BRAND(self,t):
@@ -104,10 +104,10 @@ class MatchingParser(Parser):
         t.lexer.lineno += t.value.count("\n")
     
     def t_error(self, t):
-        #print "Illegal character '%s'" % t.value[0]
+        print "Illegal character '%s'" % t.value[0]
         t.lexer.skip(1)
-        raise ParserException (type    = 'Lexical Exception',
-                               message ="Illegal character '%s'" % t.value[0])
+        #raise ParserException (type    = 'Lexical Exception',
+        #                       message ="Illegal character '%s'" % t.value[0])
 
     # Parsing rules
     # precedence = (
@@ -124,9 +124,10 @@ class MatchingParser(Parser):
                      |
         """
         if len(p) == 3:
-            p[0] = p[1] + p[2]
+            p[0] = p[1]
+            p[0].append(p[2])
         elif  len(p) == 2:
-            p[0] = p[1] 
+            p[0] = p[1]
 
     def p_prod_definition(self, p):
         """
@@ -361,47 +362,22 @@ class MatchingParser(Parser):
 
     def p_error(self, p):
         if p:
-           # print "Syntax error at '%s'" % p.value
-           raise ParserException ( type    = 'Parser Exception',
-                                    message ="Syntax error at '%s'" % p.value)
+            print "Syntax error at '%s'" % p.value
+           #raise ParserException ( type    = 'Parser Exception',
+           #                         message ="Syntax error at '%s'" % p.value)
         else:
-            # print "Syntax error at EOF"
-            raise ParserException ( type    = 'Parser Exception',
-                                     message ="Syntax error at EOF")
-
-    def processList(self, attribList):
-        # get first 'product_line' feature
-        if not isinstance(attribList,list):
-            return
-        product_line    = next((feature for feature in attribList if feature.get_type() == 'product_line'), None)
-        if product_line is not None:
-            # get first product_line's index
-            self.countProductLine += 1
-            product_line_ix = next(i for i, feature in enumerate(attribList) if feature.get_type() == 'product_line')
-            max_model_value = ""
-            count = product_line_ix
-            model_value = None
-            model_value_ix = -1
-            contains_digits = re.compile('\d')
-            for f in attribList[product_line_ix:]:
-                if isinstance(f,ProductAttribute) and f.get_type() in ('generic','product_line','generic_num'):
-                    value = f.get_value()
-                    # does feature value contain digits ?
-                    if bool(contains_digits.search(value)): 
-                        if (len(value) > len(max_model_value)):
-                            max_model_value = value
-                            model_value = f
-                            model_value_ix = count
-                else:
-                    break
-                count += 1
-            # print ">>> %s (%d), %s (%d)"  % (product_line,product_line_ix, model_value,model_value_ix)
-            if model_value is not None and product_line != model_value: 
-                model_value.set_type('model')
-                self.countModel += 1
-            for attrib in attribList:
-                if isinstance(attrib,ProductAttribute):
-                    print attrib                
+            print "Syntax error at EOF"
+            # raise ParserException ( type    = 'Parser Exception',
+            #                         message ="Syntax error at EOF")
+            
+    def processList(self, list):
+        for attrib in list:
+            if isinstance(attrib,ProductAttribute):
+                type  = attrib.get_type()
+                value = attrib.get_value()
+                print "a[t: %s, v: %s]" % (type, value)
+            else:
+                print list
         
 if __name__ == '__main__':
 
