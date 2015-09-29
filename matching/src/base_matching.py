@@ -1,9 +1,8 @@
 import sys,re
 import ply.lex as lex
 import ply.yacc as yacc
-import os
-from parser import ProductAttribute, Parser, ParserException
 
+from myParser import ProductAttribute,Parser,ParserException
                                 
 class MatchingParser(Parser):
     tokens = (
@@ -11,12 +10,13 @@ class MatchingParser(Parser):
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED','GIGABYTES',
         'MEGAPIXELS', 'MP3','INCHES','PROVIDER','OS_NAME',
         'COMMON_PRODUCT_LINE_SAMSUNG','SMARTPHONE',
-        'COMMON_PRODUCT_LINE_SONY',
-        'COMMON_PRODUCT_LINE_MOTOROLA',
+        'COMMON_PRODUCT_LINE_SONY','GENERATION', 'ORDINAL',
+        'COMMON_PRODUCT_LINE_MOTOROLA','LPAREN','RPAREN',
         ) 
 
     # Tokens
-    
+    t_LPAREN	   = r'\('
+    t_RPAREN	   = r'\)'
     t_SEP          = r'[\-\,\/\|\:\.\+]' 
     t_INCHES       = r'[\"]' 
     t_ATTRIB       = r'[a-zA-Z_][a-zA-Z0-9_]*'
@@ -27,6 +27,10 @@ class MatchingParser(Parser):
 
     def t_UNLOCKED(self,t):
         r'desbloqueado'
+        return t
+
+    def t_ORDINAL(self,t):
+        r'a\b'
         return t
 
     def t_TECHNOLOGY(self,t):
@@ -49,6 +53,9 @@ class MatchingParser(Parser):
         r'\bclaro\b|\boi\b|\btim\b|\bvivo\b'
         return t
 
+    def t_GENERATION(self,t):
+        r'geracao[.]?'
+        return t
     
     def t_NUMCHIP(self,t):
         r'dual\s+chip|tri\s+chip|quad\s+chip'
@@ -67,7 +74,7 @@ class MatchingParser(Parser):
          return t
         
     def t_COMMON_PRODUCT_LINE_MOTOROLA(self,t):
-         r'moto\b'
+         r'moto\s+g|moto\s+maxx|moto\b'
          return t
 
     def t_SMARTPHONE(self,t):
@@ -292,6 +299,16 @@ class MatchingParser(Parser):
         """
         p[0] = ProductAttribute('provider', p[1])
 
+    def p_attribute_generation(self, p):
+        """
+        attribute : NUMBER ORDINAL GENERATION  
+                  | LPAREN  NUMBER ORDINAL GENERATION RPAREN
+        """
+        if len(p) == 6:
+            p[0] = ProductAttribute('generation', p[2])
+        else:
+            p[0] = ProductAttribute('generation', p[1])
+        
     def p_attribute_tech(self, p):
         """
         attribute : TECHNOLOGY
