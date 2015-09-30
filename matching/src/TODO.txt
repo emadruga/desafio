@@ -1,9 +1,10 @@
 x common models: galaxy, xperia, moto
 x brand -> blu
 x Tela 5.1"
-- "Smartphone Dual Chip .*" 
-- double 'model'
-- model_number heuristic
-- storage -> 3GB
-- operating system -> Android 4.0/Windows Phone/Windows
+x "Smartphone Dual Chip .*" 
+x double 'model'
+x model_number heuristic
+x storage -> 3GB
+x operating system -> Android 4.0/Windows Phone/Windows
 
+ - Syntax at 'a': A-GPS, a prova de agua, a prova d'agua, resistente a agua e poeira, resistente a agua,

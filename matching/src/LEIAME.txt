@@ -1,9 +1,6 @@
 == Number of lines between 200 and 300 chars long
 % awk '{ if (length($0) > 200 && length($0) < 300) print }' planilhas/base-smartphone-matching-utf8-unix.txt |  wc -l
 
-== Lines longer than 500 chars
-% awk '{ if (length($0) > 500) print }' planilhas/base-smartphone-matching-utf8-unix.txt > sample-flat.txt
-
 == Top 10 products: frequency by name
 % cut -d " " -f1 1-sample-multiline.txt | sort | uniq -c | sort -n|tail
    1 Tablet
@@ -17,4 +14,26 @@
    5 DVD
    5 Game
 
+== Lines longer than 500 chars
+% awk '{ if (length($0) > 500) print }' planilhas/base-smartphone-matching-utf8-unix.txt > lixo2 
+
+=== Frequency of a word per line
+% grep -i -o -n 'smartphone' lixo2 | cut -d : -f 1 | uniq -c|less
+...
+  1 214
+   4 Smartphone
+   1 215
+  53 Smartphone
+   1 216
+   2 Smartphone
+   1 217
+   3 Smartphone
+   1 218
+   3 Smartphone
+...
+4 times in line 214, 53 in line 215, 2 in line 216, etc.
+
+=== Frequency of reasons for syntax errors
 % grep -n -i syntax lixo | cut -d " " -f5| sort | uniq -c| sort -n
+
+
