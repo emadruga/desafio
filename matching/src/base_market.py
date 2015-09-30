@@ -2,7 +2,7 @@ import sys,re
 import ply.lex as lex
 import ply.yacc as yacc
 import os
-from parser import ProductAttribute, Parser, ParserException
+from myParser import ProductAttribute, Parser, ParserException
 
 class MarketParser(Parser):
     tokens = (

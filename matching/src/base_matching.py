@@ -2,13 +2,13 @@ import sys,re
 import ply.lex as lex
 import ply.yacc as yacc
 
-from myParser import ProductAttribute,Parser,ParserException
+from myParser import Product,ProductAttribute,Parser,ParserException
                                 
 class MatchingParser(Parser):
     tokens = (
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED','GIGABYTES',
-        'MEGAPIXELS', 'MP3','INCHES','PROVIDER','OS_NAME',
+        'MP', 'MP3','INCHES','PROVIDER','OS_NAME',
         'COMMON_PRODUCT_LINE_SAMSUNG','SMARTPHONE',
         'COMMON_PRODUCT_LINE_SONY','GENERATION', 'ORDINAL',
         'COMMON_PRODUCT_LINE_MOTOROLA','LPAREN','RPAREN',
@@ -41,8 +41,8 @@ class MatchingParser(Parser):
         r'gb\b'
         return t
 
-    def t_MEGAPIXELS(self,t):
-        r'mp|megapixels'
+    def t_MP(self,t):
+        r'mp'
         return t
 
     def t_MP3(self,t):
@@ -62,7 +62,7 @@ class MatchingParser(Parser):
         return t
 
     def t_OS_NAME(self,t):
-        r'android|windows\s+phone|windows'
+        r'android|ios|windows\s+phone|windows'
         return t
 
     def t_COMMON_PRODUCT_LINE_SAMSUNG(self,t):
@@ -78,15 +78,15 @@ class MatchingParser(Parser):
          return t
 
     def t_SMARTPHONE(self,t):
-         r'smartphone\b'
+         r'celular[\s\/]+smartphone|smartphone\b'
          return t
 
     def t_PRODUCT(self,t):
-        r'smart\s+tv|console|smartphone|camera|hd|lavadora|projetor|sistema|ultrabook|xbox|caixa|game|notebook|dvd|tv\s+led|livro|kit|gopro|tablet'
+        r'smart\s+tv|console|smartphone|caixa|lavadora|projetor|sistema|ultrabook|xbox|game|notebook|dvd|tv\s+led|livro|kit|gopro|tablet'
         return t
     
     def t_BRAND(self,t):
-        r'samsung|huawei|nokia|lg|sony\s+ericsson|positivo|sony|microsoft|motorola|asus|alcatel|multilaser|\bblu\b'
+        r'samsung|huawei|apple|nokia|lg|sony\s+ericsson|blackberry|positivo|sony|microsoft|motorola|asus|alcatel|multilaser|\bblu\b'
         return t
 
     def t_FLOAT(self, t):
@@ -124,10 +124,11 @@ class MatchingParser(Parser):
                      |
         """
         if len(p) == 3:
-            p[0] = p[1]
-            p[0].append(p[2])
+            p[0] = [ Product(p[2]) ]
+            if isinstance(p[1],(list,tuple)) and len(p[1]) > 0:
+                p[0] = p[0] + p[1]
         elif  len(p) == 2:
-            p[0] = p[1]
+            p[0] = [ Product(p[1]) ]
 
     def p_prod_definition(self, p):
         """
@@ -142,6 +143,14 @@ class MatchingParser(Parser):
         if isinstance(p[4],(list,tuple)) and len(p[4]) > 0:
             p[0] = p[0] + p[4]
 
+    def p_prod_definition_no_header(self, p):
+        """
+         product :  product_id attribute_list
+        """
+        p[0] = p[1] 
+        if isinstance(p[2],(list,tuple)) and len(p[2]) > 0:
+            p[0] = p[0] + p[2]
+                    
     def p_product_prefix_list(self, p):
         """
         product_prefix_list :  product_prefix_list product_prefix
@@ -261,11 +270,6 @@ class MatchingParser(Parser):
         """
         p[0] = ProductAttribute('generic_num', p[1])
 
-    def p_attribute_camera(self, p):
-        """
-        attribute : camera_resolution
-        """
-        p[0] = p[1]
 
     def p_attribute_screen_diagonal(self, p):
         """
@@ -274,13 +278,6 @@ class MatchingParser(Parser):
         """
         p[0] = ProductAttribute('screen_diagonal', p[1])
         
-    def p_attribute_camera_resolution(self, p):
-        """
-        camera_resolution : NUMBER MEGAPIXELS
-                          | FLOAT  MEGAPIXELS
-        """
-        p[0] = ProductAttribute('camera_resolution', p[1])
-
     def p_attribute_operating_system(self, p):
         """
         attribute  : OS_NAME NUMBER
@@ -336,10 +333,23 @@ class MatchingParser(Parser):
 
     def p_attribute_mp3_player(self, p):
         """
-        attribute : MP3
+        attribute : MP NUMBER
         """
         p[0] = ProductAttribute('mp3_player', 1)
 
+    def p_attribute_camera(self, p):
+        """
+        attribute : camera_resolution
+        """
+        p[0] = p[1]
+
+    def p_attribute_camera_resolution(self, p):
+        """
+        camera_resolution : NUMBER MP
+                          | FLOAT  MP
+        """
+        p[0] = ProductAttribute('camera_resolution', p[1])
+        
     def p_attribute_common_product_lines(self, p):
         """
         attribute : COMMON_PRODUCT_LINE_SAMSUNG
@@ -359,25 +369,32 @@ class MatchingParser(Parser):
         attribute : PRODUCT
         """
         p[0] = ProductAttribute('product', p[1])
+        
+    def p_attribute_smartphone(self, p):
+        """
+        attribute : SMARTPHONE
+                  | LPAREN SMARTPHONE RPAREN 
+        """
+        p[0] = ProductAttribute('product', 'smartphone')
 
     def p_error(self, p):
         if p:
-            print "Syntax error at '%s'" % p.value
-           #raise ParserException ( type    = 'Parser Exception',
-           #                         message ="Syntax error at '%s'" % p.value)
+           # print "Syntax error at '%s'" % p.value
+            raise ParserException ( type    = 'Parser Exception',
+                                    message ="Syntax error at '%s'" % p.value)
         else:
-            print "Syntax error at EOF"
-            # raise ParserException ( type    = 'Parser Exception',
-            #                         message ="Syntax error at EOF")
+            #print "Syntax error at EOF"
+            raise ParserException ( type    = 'Parser Exception',
+                                    message ="Syntax error at EOF")
             
     def processList(self, list):
-        for attrib in list:
-            if isinstance(attrib,ProductAttribute):
-                type  = attrib.get_type()
-                value = attrib.get_value()
-                print "a[t: %s, v: %s]" % (type, value)
+        if list is None:
+            return
+        for prod in list:
+            if isinstance(prod,Product):
+                print prod
             else:
-                print list
+                print "prrr!"
         
 if __name__ == '__main__':
 

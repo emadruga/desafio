@@ -40,6 +40,18 @@ class ProductAttribute(object):
     def set_value(self, v):
         self._avalue = v
 
+class Product(object):
+    def __init__(self, list):
+        self._alist = list
+
+    def __repr__(self):
+        str = "Product ("
+        for attrib in self._alist:
+            if isinstance(attrib,ProductAttribute):
+                str += "%s," % attrib
+        str += " )"
+        return str
+        
 class Parser(object):
     """
     Base class for a lexer/parser that has the rules defined as methods
