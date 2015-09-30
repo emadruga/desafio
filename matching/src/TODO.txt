@@ -7,4 +7,6 @@ x model_number heuristic
 x storage -> 3GB
 x operating system -> Android 4.0/Windows Phone/Windows
 
- - Syntax at 'a': A-GPS, a prova de agua, a prova d'agua, resistente a agua e poeira, resistente a agua,
+ - Syntax at 'a': A-GPS, a prova de agua, a prova d'agua, resistente a
+   agua e poeira, resistente a agua,
+ - Combine generic into product_line: Galaxy Prime Duos, Galaxy S4, etc.
