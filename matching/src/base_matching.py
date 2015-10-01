@@ -8,8 +8,8 @@ class MatchingParser(Parser):
     tokens = (
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED','GIGABYTES',
-        'MP', 'MP3','INCHES','PROVIDER','OS_NAME',
-        'COMMON_PRODUCT_LINE_SAMSUNG','SMARTPHONE',
+        'MP','INCHES','PROVIDER','OS_NAME','GPS',
+        'COMMON_PRODUCT_LINE_SAMSUNG','SMARTPHONE','WATERPROOF',
         'COMMON_PRODUCT_LINE_SONY','GENERATION', 'ORDINAL',
         'COMMON_PRODUCT_LINE_MOTOROLA','LPAREN','RPAREN',
         ) 
@@ -20,9 +20,17 @@ class MatchingParser(Parser):
     t_SEP          = r'[\-\,\/\|\:\.\+]' 
     t_INCHES       = r'[\"]|\'[\s]?\'' 
     t_ATTRIB       = r'[a-zA-Z_][a-zA-Z0-9_]*'
+
+    def t_GPS(self,t):
+        r'a\-gps|gps'
+        return t
+    
+    def t_WATERPROOF(self,t):
+        r'resistente.*agua|a.*agua'
+        return t
     
     def t_COLOR(self,t):
-        r'azul|branco|preto|dourado|titanio|verde|grafite|vermelho|rosa'
+        r'azul|branco|preto|dourado|titanio|verde|grafite|vermelho|rosa|roxo'
         return t
 
     def t_UNLOCKED(self,t):
@@ -43,10 +51,6 @@ class MatchingParser(Parser):
 
     def t_MP(self,t):
         r'mp'
-        return t
-
-    def t_MP3(self,t):
-        r'mp3|mp3\s+player'
         return t
 
     def t_PROVIDER(self,t):
@@ -331,6 +335,19 @@ class MatchingParser(Parser):
         """
         p[0] = ProductAttribute('unlocked', 1)
 
+    def p_attribute_waterproof(self, p):
+        """
+        attribute : WATERPROOF
+        """
+        p[0] = ProductAttribute('waterproof', 1)
+
+    def p_attribute_gps(self, p):
+        """
+        attribute : GPS
+        """
+        p[0] = ProductAttribute('gps', 1)
+
+
     def p_attribute_mp3_player(self, p):
         """
         attribute : MP NUMBER
@@ -386,15 +403,43 @@ class MatchingParser(Parser):
             #print "Syntax error at EOF"
             raise ParserException ( type    = 'Parser Exception',
                                     message ="Syntax error at EOF")
-            
-    def processList(self, list):
-        if list is None:
+
+    def processList(self, prodList):
+        # get first 'product_line' feature
+        if not isinstance(prodList,list):
             return
-        for prod in list:
-            if isinstance(prod,Product):
-                print prod
-            else:
-                print "prrr!"
+
+        for prod in prodList:
+            attribList = prod._alist
+            product_line    = next((feature for feature in attribList if feature.get_type() == 'product_line'), None)
+            if product_line is not None:
+                # get first product_line's index
+                self.countProductLine += 1
+                product_line_ix = next(i for i, feature in enumerate(attribList) if feature.get_type() == 'product_line')
+                max_model_value = ""
+                count = product_line_ix
+                model_value = None
+                model_value_ix = -1
+                contains_digits = re.compile('\d')
+                for f in attribList[product_line_ix:]:
+                    if isinstance(f,ProductAttribute) and f.get_type() in ('generic','product_line','generic_num'):
+                        value = f.get_value()
+                        # does feature value contain digits ?
+                        if bool(contains_digits.search(value)): 
+                            if (len(value) > len(max_model_value)):
+                                max_model_value = value
+                                model_value = f
+                                model_value_ix = count
+                    else:
+                        break
+                    count += 1
+                print ">>> %s (%d), %s (%d)"  % (product_line,product_line_ix, model_value,model_value_ix)
+                if model_value is not None and product_line != model_value: 
+                    model_value.set_type('model')
+                    self.countModel += 1
+                for attrib in attribList:
+                    if isinstance(attrib,ProductAttribute):
+                        print attrib                
         
 if __name__ == '__main__':
 
