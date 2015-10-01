@@ -100,8 +100,9 @@ class Parser(object):
                 print "------------------"
                 print "%s" % line
                 try:
-                    attribList = yacc.parse(ascii_line.lower())
-                    self.processList (attribList)
+                    if len(ascii_line) < 500:
+                        attribList = yacc.parse(ascii_line.lower())
+                        self.processList (attribList)
                     
                 except ParserException as e:
                     print e
