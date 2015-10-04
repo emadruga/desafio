@@ -2,7 +2,7 @@ import sys,re
 import ply.lex as lex
 import ply.yacc as yacc
 
-from myParser import Product,ProductAttribute,Parser,ParserException
+from myParser import Product,ProductAttribute,Parser,ParserException, AutoVivification
                                 
 class MatchingParser(Parser):
     tokens = (
@@ -404,13 +404,13 @@ class MatchingParser(Parser):
             raise ParserException ( type    = 'Parser Exception',
                                     message ="Syntax error at EOF")
 
-    def processList(self, prodList):
+    def processList(self, prodList,line):
         # get first 'product_line' feature
         if not isinstance(prodList,list):
             return
 
         for prod in prodList:
-            attribList = prod._alist
+            attribList = prod._alist                        
             product_line    = next((feature for feature in attribList if feature.get_type() == 'product_line'), None)
             if product_line is not None:
                 # get first product_line's index
@@ -437,9 +437,14 @@ class MatchingParser(Parser):
                 if model_value is not None and product_line != model_value: 
                     model_value.set_type('model')
                     self.countModel += 1
+                    brand      = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
+                    if brand is not None:
+                        print ":: [%s][%s]" % (brand.get_value(), model_value.get_value())
+                        self.productDict[brand.get_value()][model_value.get_value()] = line
+
                 for attrib in attribList:
                     if isinstance(attrib,ProductAttribute):
-                        print attrib                
+                        print attrib
         
 if __name__ == '__main__':
 
@@ -448,6 +453,7 @@ if __name__ == '__main__':
         file = sys.argv[1]
     prod = MatchingParser(debug = 0, filename = file)
     prod.run()
+    prod.dump()
     print "================"
     print "Num Prod Lines: %d"% prod.countProductLine;
     print "Num Models:     %d"% prod.countModel;

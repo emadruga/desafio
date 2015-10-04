@@ -3,7 +3,17 @@ import unicodedata
 import ply.lex as lex
 import ply.yacc as yacc
 import os
+import pprint
 
+class AutoVivification(dict):
+    """Implementation of perl's autovivification feature."""
+    def __getitem__(self, item):
+        try:
+            return dict.__getitem__(self, item)
+        except KeyError:
+            value = self[item] = type(self)()
+            return value
+        
 class ParserException(Exception):
     """Exception related to the web service."""
 
@@ -71,6 +81,7 @@ class Parser(object):
         self.tabmodule = modname + "_" + "parsetab"
         self.countProductLine = 0
         self.countModel       = 0
+        self.productDict      = AutoVivification()
 
         #print self.debugfile, self.tabmodule
 
@@ -81,13 +92,14 @@ class Parser(object):
                   debugfile=self.debugfile,
                   tabmodule=self.tabmodule)
         
-    def processList(self, list):
-        for attrib in list:
-            if isinstance(attrib,ProductAttribute):
-                type  = attrib.get_type()
-                value = attrib.get_value()
-                print "a[t: %s, v: %s]" % (type, value)
-            
+    def processList(self, list, line):
+        for prod in list:
+            if isinstance(prod,Product):
+                print prod
+                
+    def dump(self):
+        pprint.pprint(self.productDict)
+        
     def run(self):
         attribList = None
         with open(self.filename) as fp:
@@ -101,8 +113,8 @@ class Parser(object):
                 print "%s" % line
                 try:
                     if len(ascii_line) < 500:
-                        attribList = yacc.parse(ascii_line.lower())
-                        self.processList (attribList)
+                        productList = yacc.parse(ascii_line.lower())
+                        self.processList (productList, line)
                     
                 except ParserException as e:
                     print e
