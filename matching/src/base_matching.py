@@ -8,7 +8,7 @@ class MatchingParser(Parser):
     tokens = (
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED','GIGABYTES',
-        'MP','INCHES','PROVIDER','OS_NAME','GPS',
+        'MP','INCHES','PROVIDER','OS_NAME','GPS','VENDOR',
         'COMMON_PRODUCT_LINE_SAMSUNG','SMARTPHONE','WATERPROOF',
         'COMMON_PRODUCT_LINE_SONY','GENERATION', 'ORDINAL',
         'COMMON_PRODUCT_LINE_MOTOROLA','LPAREN','RPAREN',
@@ -29,8 +29,12 @@ class MatchingParser(Parser):
         r'resistente.*agua|a.*agua'
         return t
     
+    def t_VENDOR(self,t):
+        r'frete.*webfones|webfones'
+        return t
+
     def t_COLOR(self,t):
-        r'azul|branco|preto|dourado|titanio|verde|grafite|vermelho|rosa|roxo'
+        r'azul|branco|preto|prata|dourado|titanio|verde|grafite|vermelho|rosa|roxo'
         return t
 
     def t_UNLOCKED(self,t):
@@ -42,7 +46,7 @@ class MatchingParser(Parser):
         return t
 
     def t_TECHNOLOGY(self,t):
-        r'3g|4g'
+        r'3g|4g|gsm'
         return t
 
     def t_GIGABYTES(self,t):
@@ -62,7 +66,7 @@ class MatchingParser(Parser):
         return t
     
     def t_NUMCHIP(self,t):
-        r'dual\s+chip|tri\s+chip|quad\s+chip'
+        r'(dual|tri|quad)\s+(sim|chip)'
         return t
 
     def t_OS_NAME(self,t):
@@ -381,6 +385,12 @@ class MatchingParser(Parser):
         """
         p[0] = ProductAttribute('brand', p[1])
 
+    def p_attribute_vendor(self, p):
+        """
+        attribute : VENDOR
+        """
+        pass
+    
     def p_attribute_product(self, p):
         """
         attribute : PRODUCT
@@ -405,7 +415,7 @@ class MatchingParser(Parser):
                                     message ="Syntax error at EOF")
 
     def processList(self, prodList,line):
-        # get first 'product_line' feature
+        # find a model in product description, if it exists
         if not isinstance(prodList,list):
             return
 
@@ -414,6 +424,7 @@ class MatchingParser(Parser):
             product_line    = next((feature for feature in attribList if feature.get_type() == 'product_line'), None)
             if product_line is not None:
                 # get first product_line's index
+                product_line_value = ""
                 self.countProductLine += 1
                 product_line_ix = next(i for i, feature in enumerate(attribList) if feature.get_type() == 'product_line')
                 max_model_value = ""
@@ -430,6 +441,10 @@ class MatchingParser(Parser):
                                 max_model_value = value
                                 model_value = f
                                 model_value_ix = count
+                            else:
+                                product_line_value += " " + value
+                        else:
+                            product_line_value += " " + value
                     else:
                         break
                     count += 1
@@ -444,6 +459,8 @@ class MatchingParser(Parser):
                             self.productDict[brand.get_value()][model_value.get_value()] = [ line ]
                         else:
                             self.productDict[brand.get_value()][model_value.get_value()].append(line)
+                if  product_line_value != "" and  product_line_value != product_line.get_value():
+                    product_line.set_value(product_line_value.lstrip())
                 for attrib in attribList:
                     if isinstance(attrib,ProductAttribute):
                         print attrib
