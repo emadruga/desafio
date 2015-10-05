@@ -2,7 +2,7 @@ import sys,re
 import ply.lex as lex
 import ply.yacc as yacc
 
-from myParser import Product,ProductAttribute,Parser,ParserException, AutoVivification
+from myParser import Product,ProductAttribute,Parser,ParserException
                                 
 class MatchingParser(Parser):
     tokens = (
@@ -426,7 +426,7 @@ class MatchingParser(Parser):
                         value = f.get_value()
                         # does feature value contain digits ?
                         if bool(contains_digits.search(value)): 
-                            if (len(value) > len(max_model_value)):
+                            if (len(value) > len(max_model_value)) and len(value) > 3:
                                 max_model_value = value
                                 model_value = f
                                 model_value_ix = count
@@ -440,8 +440,10 @@ class MatchingParser(Parser):
                     brand      = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
                     if brand is not None:
                         print ":: [%s][%s]" % (brand.get_value(), model_value.get_value())
-                        self.productDict[brand.get_value()][model_value.get_value()] = line
-
+                        if  len(self.productDict[brand.get_value()][model_value.get_value()]) == 0:
+                            self.productDict[brand.get_value()][model_value.get_value()] = [ line ]
+                        else:
+                            self.productDict[brand.get_value()][model_value.get_value()].append(line)
                 for attrib in attribList:
                     if isinstance(attrib,ProductAttribute):
                         print attrib

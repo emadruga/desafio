@@ -83,15 +83,13 @@ class Parser(object):
         self.countModel       = 0
         self.productDict      = AutoVivification()
 
-        #print self.debugfile, self.tabmodule
-
         # Build the lexer and parser
         lex.lex(module=self, debug=self.debug)
         yacc.yacc(module=self,
                   debug=self.debug,
                   debugfile=self.debugfile,
                   tabmodule=self.tabmodule)
-        
+
     def processList(self, list, line):
         for prod in list:
             if isinstance(prod,Product):
@@ -114,7 +112,7 @@ class Parser(object):
                 try:
                     if len(ascii_line) < 500:
                         productList = yacc.parse(ascii_line.lower())
-                        self.processList (productList, line)
+                        self.processList (productList, ascii_line)
                     
                 except ParserException as e:
                     print e
