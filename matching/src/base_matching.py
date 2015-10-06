@@ -13,7 +13,8 @@ class MatchingParser(Parser):
         'COMMON_PRODUCT_LINE_SONY','GENERATION', 'ORDINAL',
         'COMMON_PRODUCT_LINE_MOTOROLA','LPAREN','RPAREN',
         'PROCESSOR_TYPE',
-        #'GHZ',
+        'PROCESSOR',
+        # 'GHZ',
         ) 
 
     # Tokens
@@ -33,6 +34,10 @@ class MatchingParser(Parser):
     
     def t_PROCESSOR_TYPE(self,t):
         r'(single|dual|quad|octa)[ \-]core'
+        return t
+    
+    def t_PROCESSOR(self,t):
+        r'processador'
         return t
     
     def t_WATERPROOF(self,t):
@@ -122,10 +127,9 @@ class MatchingParser(Parser):
         t.lexer.lineno += t.value.count("\n")
     
     def t_error(self, t):
-        print "Illegal character '%s'" % t.value[0]
         t.lexer.skip(1)
-        #raise ParserException (type    = 'Lexical Exception',
-        #                       message ="Illegal character '%s'" % t.value[0])
+        raise ParserException (type    = 'Lexical Exception',
+                               message ="Illegal character '%s'" % t.value[0])
 
     # Parsing rules
     # precedence = (
@@ -303,13 +307,28 @@ class MatchingParser(Parser):
         """
         p[0] = ProductAttribute('operating_system', p[1])
 
-    def p_attribute_processor(self, p):
+    # def p_attribute_processor(self, p):
+    #     """
+    #     attribute  : PROCESSOR_TYPE
+    #                | PROCESSOR PROCESSOR_TYPE
+    #     """
+    #     if   len(p) == 2:
+    #         p[0] = ProductAttribute('processor_numcore', p[1]) 
+    #     elif len(p) == 3:
+    #         p[0] = ProductAttribute('processor_numcore', p[2]) 
+
+    def p_attribute_processor_ignore(self, p):
+        """
+        attribute  : PROCESSOR
+        """
+        pass
+        
+    def p_attribute_processor_type(self, p):
         """
         attribute  : PROCESSOR_TYPE
         """
         p[0] = ProductAttribute('processor_numcore', p[1]) 
 
-        
     def p_attribute_storage(self, p):
         """
         attribute  :  NUMBER GIGABYTES
@@ -432,7 +451,8 @@ class MatchingParser(Parser):
                                     message ="Syntax error at EOF")
 
     def processList(self, prodList,line):
-        # find a model in product description, if it exists
+        # if available, find a model in the  product description
+        # grow the product line attribute with relevant info.
         if not isinstance(prodList,list):
             return
 
@@ -465,32 +485,42 @@ class MatchingParser(Parser):
                     else:
                         break
                     count += 1
-                print ">>> %s (%d), %s (%d)"  % (product_line,product_line_ix, model_value,model_value_ix)
+                #print ">>> %s (%d), %s (%d)"  % (product_line,product_line_ix, model_value,model_value_ix)
                 if model_value is not None and product_line != model_value: 
                     model_value.set_type('model')
                     self.countModel += 1
                     brand      = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
                     if brand is not None:
-                        print ":: [%s][%s]" % (brand.get_value(), model_value.get_value())
+                        #print ":: [%s][%s]" % (brand.get_value(), model_value.get_value())
                         if  len(self.productDict[brand.get_value()][model_value.get_value()]) == 0:
                             self.productDict[brand.get_value()][model_value.get_value()] = [ line ]
                         else:
                             self.productDict[brand.get_value()][model_value.get_value()].append(line)
                 if  product_line_value != "" and  product_line_value != product_line.get_value():
                     product_line.set_value(product_line_value.lstrip())
-                for attrib in attribList:
-                    if isinstance(attrib,ProductAttribute):
-                        print attrib
+                # for attrib in attribList:
+                #     if isinstance(attrib,ProductAttribute):
+                #         print attrib
         
 if __name__ == '__main__':
 
     file = './planilhas/sample-utf8.txt'
     if len(sys.argv) > 1:
-        file = sys.argv[1]
-    prod = MatchingParser(debug = 0, filename = file)
-    prod.run()
-    prod.dump()
+        file1 = sys.argv[1]
+    if len(sys.argv) > 2:
+        file2 = sys.argv[2]
+    market = MatchingParser(debug = 0, filename = file1)
+    market.run()
+    print ">>>>>>>>>>>>>>>>>>"
+    market.dump()
+    offers = MatchingParser(debug = 0, filename = file2)
+    offers.run()
+    print "<<<<<<<<<<<<<<<<<<"
+    offers.dump()
+    offers.match(market)
     print "================"
-    print "Num Prod Lines: %d"% prod.countProductLine;
-    print "Num Models:     %d"% prod.countModel;
+    print "1) Num Prod Lines: %d"% market.countProductLine;
+    print "   Num Models:     %d"% market.countModel;
+    print "2) Num Prod Lines: %d"% offers.countProductLine;
+    print "   Num Models:     %d"% offers.countModel;
     

@@ -94,7 +94,19 @@ class Parser(object):
         for prod in list:
             if isinstance(prod,Product):
                 print prod
-                
+
+    def exactModelMatch(self, prod):
+        result = None
+        if isinstance(prod,Product):
+            attribList = prod._alist
+            brand =  next((att for att in attribList if isinstance(att,ProductAttribute) and att.get_type() == 'brand'), None)
+            model =  next((att for att in attribList if isinstance(att,ProductAttribute) and att.get_type() == 'model'), None)
+            if (brand is not None) and (model is not None):
+                if brand.get_value() in prod.productDict:
+                    if model.get_value() in prod.productDict[brand.get_value()]:
+                        result =  prod.productDict[brand.get_value()][model.get_value()]
+        return result
+            
     def dump(self):
         pprint.pprint(self.productDict)
         
@@ -107,12 +119,23 @@ class Parser(object):
                 unicode_line  = line.decode('utf8')
                 nfkd_line     = unicodedata.normalize('NFKD',unicode_line)
                 ascii_line    = nfkd_line.encode('ASCII', 'ignore')
-                print "------------------"
-                print "%s" % line
+                #print "------------------"
+                #print "%s" % line
                 try:
                     if len(ascii_line) < 500:
                         productList = yacc.parse(ascii_line.lower())
-                        self.processList (productList, ascii_line)
-                    
+                        self.processList (productList, ascii_line)                   
                 except ParserException as e:
-                    print e
+                    sys.stderr.write('<ERROR>: %s\n' % e)
+                    
+    def match(self, otherParser):
+        assert isinstance(otherParser, Parser)
+        
+        refDict = self.productDict
+        otherDict = otherParser.productDict
+        
+        for brand in refDict:
+            for model in refDict[brand]:
+                if brand in otherDict:
+                    if model in otherDict[brand]:
+                        print "Match: %s/%s" % (brand,model)
