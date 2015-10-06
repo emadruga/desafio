@@ -12,6 +12,8 @@ class MatchingParser(Parser):
         'COMMON_PRODUCT_LINE_SAMSUNG','SMARTPHONE','WATERPROOF',
         'COMMON_PRODUCT_LINE_SONY','GENERATION', 'ORDINAL',
         'COMMON_PRODUCT_LINE_MOTOROLA','LPAREN','RPAREN',
+        'PROCESSOR_TYPE',
+        #'GHZ',
         ) 
 
     # Tokens
@@ -23,6 +25,14 @@ class MatchingParser(Parser):
 
     def t_GPS(self,t):
         r'a\-gps|gps'
+        return t
+    
+    # def t_GHZ(self,t):
+    #     r'ghz'
+    #     return t
+    
+    def t_PROCESSOR_TYPE(self,t):
+        r'(single|dual|quad|octa)[ \-]core'
         return t
     
     def t_WATERPROOF(self,t):
@@ -293,6 +303,13 @@ class MatchingParser(Parser):
         """
         p[0] = ProductAttribute('operating_system', p[1])
 
+    def p_attribute_processor(self, p):
+        """
+        attribute  : PROCESSOR_TYPE
+        """
+        p[0] = ProductAttribute('processor_numcore', p[1]) 
+
+        
     def p_attribute_storage(self, p):
         """
         attribute  :  NUMBER GIGABYTES
