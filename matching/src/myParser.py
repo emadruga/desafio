@@ -133,9 +133,17 @@ class Parser(object):
         
         refDict = self.productDict
         otherDict = otherParser.productDict
-        
+
+        numMatches = 0
+        numNoMatches = 0
         for brand in refDict:
             for model in refDict[brand]:
                 if brand in otherDict:
                     if model in otherDict[brand]:
+                        numMatches += len(refDict[brand][model])
                         print "Match: %s/%s" % (brand,model)
+                    else:
+                        numNoMatches += len(refDict[brand][model])
+                        
+        print "Num matches:    %d (at least one match)" % numMatches
+        print "Num no matches: %d" % numNoMatches
