@@ -450,57 +450,6 @@ class MatchingParser(Parser):
             raise ParserException ( type    = 'Parser Exception',
                                     message ="Syntax error at EOF")
 
-    def processList(self, prodList,line):
-        # if available, find a model in the  product description
-        # grow the product line attribute with relevant info.
-        if not isinstance(prodList,list):
-            return
-
-        for prod in prodList:
-            attribList = prod._alist                        
-            product_line    = next((feature for feature in attribList if feature.get_type() == 'product_line'), None)
-            if product_line is not None:
-                # get first product_line's index
-                product_line_value = ""
-                self.countProductLine += 1
-                product_line_ix = next(i for i, feature in enumerate(attribList) if feature.get_type() == 'product_line')
-                max_model_value = ""
-                count = product_line_ix
-                model_value = None
-                model_value_ix = -1
-                contains_digits = re.compile('\d')
-                for f in attribList[product_line_ix:]:
-                    if isinstance(f,ProductAttribute) and f.get_type() in ('generic','product_line','generic_num'):
-                        value = f.get_value()
-                        # does feature value contain digits ?
-                        if bool(contains_digits.search(value)): 
-                            if (len(value) > len(max_model_value)) and len(value) > 3:
-                                max_model_value = value
-                                model_value = f
-                                model_value_ix = count
-                            else:
-                                product_line_value += " " + value
-                        else:
-                            product_line_value += " " + value
-                    else:
-                        break
-                    count += 1
-                #print ">>> %s (%d), %s (%d)"  % (product_line,product_line_ix, model_value,model_value_ix)
-                if model_value is not None and product_line != model_value: 
-                    model_value.set_type('model')
-                    self.countModel += 1
-                    brand      = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
-                    if brand is not None:
-                        #print ":: [%s][%s]" % (brand.get_value(), model_value.get_value())
-                        if  len(self.productDict[brand.get_value()][model_value.get_value()]) == 0:
-                            self.productDict[brand.get_value()][model_value.get_value()] = [ line ]
-                        else:
-                            self.productDict[brand.get_value()][model_value.get_value()].append(line)
-                if  product_line_value != "" and  product_line_value != product_line.get_value():
-                    product_line.set_value(product_line_value.lstrip())
-                # for attrib in attribList:
-                #     if isinstance(attrib,ProductAttribute):
-                #         print attrib
         
 if __name__ == '__main__':
 
