@@ -124,6 +124,7 @@ class Parser(object):
         self.tabmodule = modname + "_" + "parsetab"
         self.countProductLine = 0
         self.countModel       = 0
+        self.countBrand       = 0
         self.productModelDict     = AutoVivification()
         self.productLineDict      = AutoVivification()
         self.unmatchedProdList = []
@@ -149,7 +150,6 @@ class Parser(object):
             if product_line is not None:
                 # get first product_line's index
                 product_line_value = ""
-                self.countProductLine += 1
                 product_line_ix = next(i for i, f in enumerate(attribList) if f.get_type() == 'product_line')
                 max_model_value = ""
                 count = product_line_ix
@@ -172,12 +172,9 @@ class Parser(object):
                     else:
                         break
                     count += 1
-                #print ">>> %s (%d), %s (%d)"  % (product_line,product_line_ix, model_value,model_value_ix)
                 if model_value is not None and product_line != model_value: 
                     model_value.set_type('model')
-                    self.countModel += 1
                     if brand is not None:
-                        #print ":: [%s][%s]" % (brand.get_value(), model_value.get_value())
                         if  len(self.productModelDict[brand.get_value()][model_value.get_value()]) == 0:
                             self.productModelDict[brand.get_value()][model_value.get_value()] = [ line ]
                         else:
@@ -199,6 +196,12 @@ class Parser(object):
         if prodList is not None:
             for prod in prodList:
                 prod.updateInfo(line)
+                if prod.getProductBrand() is not None:
+                    self.countBrand += 1
+                if prod.getProductLine() is not None:
+                    self.countProductLine += 1
+                if prod.getProductModel() is not None:
+                    self.countModel += 1
                 self.unmatchedProdList.append(prod)
         
     def dump(self):
@@ -206,6 +209,10 @@ class Parser(object):
         pprint.pprint(self.productModelDict)
         print "<"*20
         pprint.pprint(self.productLineDict)
+        print "=" * 30
+        print "Num brands: %d" % self.countBrand
+        print "Num product lines: %d" % self.countProductLine
+        print "Num models: %d" % self.countModel
         
     def run(self):
         attribList = None
@@ -226,7 +233,7 @@ class Parser(object):
                 except ParserException as e:
                     sys.stderr.write('<ERROR>: %s\n' % e)
 
-    def exactModelMatch(self, otherParser):
+    def _exactModelMatch(self, otherParser):
         assert isinstance(otherParser, Parser)
 
         unmatchedList = self.unmatchedProdList;
@@ -244,7 +251,7 @@ class Parser(object):
                     else:
                         print "No Model Match (%s): %s" % (model,prod.getLine())
 
-    def exactProductLineMatch(self, otherParser):
+    def _exactProductLineMatch(self, otherParser):
         assert isinstance(otherParser, Parser)
 
         unmatchedList = self.unmatchedProdList;
@@ -265,10 +272,9 @@ class Parser(object):
     def match(self, comparisonParser):
         assert isinstance(comparisonParser, Parser)
 
-        self.exactModelMatch(comparisonParser)
-        print "Num matches:    %d" % len(self.matchedProdList)
-        print "Num no matches: %d" % len(self.unmatchedProdList)
-        self.exactProductLineMatch(comparisonParser)
+        self._exactModelMatch(comparisonParser)
+        self._exactProductLineMatch(comparisonParser)
+        print "=" * 30
         print "Num matches:    %d" % len(self.matchedProdList)
         print "Num no matches: %d" % len(self.unmatchedProdList)
                 
