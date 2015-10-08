@@ -1,4 +1,6 @@
-parser_ProductParser_parsetab.py
-parser_ProductParser_parsetab.pyc
-planilhas/sample-utf8.txt
+myParser.pyc
+myParser_MatchingParser_parsetab.py 
+myParser_MatchingParser_parsetab.pyc
+error.log
+info.log
 
