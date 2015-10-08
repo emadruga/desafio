@@ -460,11 +460,9 @@ if __name__ == '__main__':
         file2 = sys.argv[2]
     market = MatchingParser(debug = 0, filename = file1)
     market.run()
-    print ">>>>>>>>>>>>>>>>>>"
     market.dump()
     offers = MatchingParser(debug = 0, filename = file2)
     offers.run()
-    print "<<<<<<<<<<<<<<<<<<"
     offers.dump()
     offers.match(market)
     print "================"

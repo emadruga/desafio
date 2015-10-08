@@ -57,17 +57,21 @@ class Product(object):
         self._product_line =  None
         self._brand        =  None
         self._model        =  None
+        self._line         =  None
 
-    def updateInfo(self):
+    def updateInfo(self,line):
         list = self.getAttributeList()
         self._product      =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'product'), None)
         self._product_line =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'product_line'), None)
         self._brand        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
         self._model        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'model'), None)
+        self._line         =  line
 
     def getAttributeList(self):
         return self._alist
 
+    def getLine(self):
+        return self._line
         
     def getProductName(self):
         response = None
@@ -120,7 +124,8 @@ class Parser(object):
         self.tabmodule = modname + "_" + "parsetab"
         self.countProductLine = 0
         self.countModel       = 0
-        self.productDict      = AutoVivification()
+        self.productModelDict     = AutoVivification()
+        self.productLineDict      = AutoVivification()
         self.unmatchedProdList = []
         self.matchedProdList = []
 
@@ -138,13 +143,14 @@ class Parser(object):
             return
 
         for prod in prodList:
-            attribList = prod._alist                        
-            product_line    = next((feature for feature in attribList if feature.get_type() == 'product_line'), None)
+            attribList = prod._alist
+            brand           = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
+            product_line    = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'product_line'), None)
             if product_line is not None:
                 # get first product_line's index
                 product_line_value = ""
                 self.countProductLine += 1
-                product_line_ix = next(i for i, feature in enumerate(attribList) if feature.get_type() == 'product_line')
+                product_line_ix = next(i for i, f in enumerate(attribList) if f.get_type() == 'product_line')
                 max_model_value = ""
                 count = product_line_ix
                 model_value = None
@@ -153,7 +159,7 @@ class Parser(object):
                 for f in attribList[product_line_ix:]:
                     if isinstance(f,ProductAttribute) and f.get_type() in ('generic','product_line','generic_num'):
                         value = f.get_value()
-                        # does feature value contain digits ?
+                        # does attribute value contain digits ?
                         if bool(contains_digits.search(value)): 
                             if (len(value) > len(max_model_value)) and len(value) > 3:
                                 max_model_value = value
@@ -170,15 +176,21 @@ class Parser(object):
                 if model_value is not None and product_line != model_value: 
                     model_value.set_type('model')
                     self.countModel += 1
-                    brand      = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
                     if brand is not None:
                         #print ":: [%s][%s]" % (brand.get_value(), model_value.get_value())
-                        if  len(self.productDict[brand.get_value()][model_value.get_value()]) == 0:
-                            self.productDict[brand.get_value()][model_value.get_value()] = [ line ]
+                        if  len(self.productModelDict[brand.get_value()][model_value.get_value()]) == 0:
+                            self.productModelDict[brand.get_value()][model_value.get_value()] = [ line ]
                         else:
-                            self.productDict[brand.get_value()][model_value.get_value()].append(line)
+                            self.productModelDict[brand.get_value()][model_value.get_value()].append(line)
                 if  product_line_value != "" and  product_line_value != product_line.get_value():
                     product_line.set_value(product_line_value.lstrip())
+                    lineDict =  self.productLineDict
+                    if brand is not None:
+                        if  len(lineDict[brand.get_value()][product_line.get_value()]) == 0:
+                            lineDict[brand.get_value()][product_line.get_value()] = [ line ]
+                        else:
+                            lineDict[brand.get_value()][product_line.get_value()].append(line)
+
                 # for attrib in attribList:
                 #     if isinstance(attrib,ProductAttribute):
                 #         print attrib
@@ -186,11 +198,14 @@ class Parser(object):
     def prepareForMatching(self,prodList, line):
         if prodList is not None:
             for prod in prodList:
-                prod.updateInfo()
+                prod.updateInfo(line)
                 self.unmatchedProdList.append(prod)
         
     def dump(self):
-        pprint.pprint(self.productDict)
+        print ">"*20
+        pprint.pprint(self.productModelDict)
+        print "<"*20
+        pprint.pprint(self.productLineDict)
         
     def run(self):
         attribList = None
@@ -216,22 +231,45 @@ class Parser(object):
 
         unmatchedList = self.unmatchedProdList;
         matchedList   = self.matchedProdList;
-        otherDict = otherParser.productDict
+        otherDict = otherParser.productModelDict
         for prod in unmatchedList:
             brand = prod.getProductBrand()
             model = prod.getProductModel()
             if (brand is not None) and (model is not None):
                 if brand in otherDict:
                     if model in otherDict[brand]:
-                        print "Match: %s/%s" % (brand,model)
+                        print "Match1: %s/%s" % (brand,model)
                         unmatchedList.remove(prod)
                         matchedList.append(prod)
+                    else:
+                        print "No Model Match (%s): %s" % (model,prod.getLine())
 
-    def match(self, comparisonParser):
+    def exactProductLineMatch(self, otherParser):
         assert isinstance(otherParser, Parser)
 
+        unmatchedList = self.unmatchedProdList;
+        matchedList   = self.matchedProdList;
+        otherDict = otherParser.productLineDict
+        for prod in unmatchedList:
+            brand = prod.getProductBrand()
+            pline = prod.getProductLine()
+            if (brand is not None) and (pline is not None):
+                if brand in otherDict:
+                    if pline in otherDict[brand]:
+                        print "Match2: %s/%s" % (brand,pline)
+                        unmatchedList.remove(prod)
+                        matchedList.append(prod)
+                    else:
+                        print "No Prod Line Match (%s): %s" % (pline,prod.getLine())
+
+    def match(self, comparisonParser):
+        assert isinstance(comparisonParser, Parser)
+
         self.exactModelMatch(comparisonParser)
-        
-        print "Num matches:    %d" % len(matchedList)
-        print "Num no matches: %d" % len(unmatchedList)
+        print "Num matches:    %d" % len(self.matchedProdList)
+        print "Num no matches: %d" % len(self.unmatchedProdList)
+        self.exactProductLineMatch(comparisonParser)
+        print "Num matches:    %d" % len(self.matchedProdList)
+        print "Num no matches: %d" % len(self.unmatchedProdList)
+                
           
