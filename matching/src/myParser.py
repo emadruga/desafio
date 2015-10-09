@@ -126,6 +126,7 @@ class Parser(object):
             modname = "parser"+"_"+self.__class__.__name__
         self.debugfile = modname + ".dbg"
         self.dumpfile = modname + ".dump"
+        self.infofile = modname + ".info"
         self.tabmodule = modname + "_" + "parsetab"
         self.productModelDict     = AutoVivification()
         self.productLineDict      = AutoVivification()
@@ -249,9 +250,9 @@ class Parser(object):
                         self.processList (productList, ascii_line)
                         self.prepareForMatching(productList, ascii_line)
                 except ParserException as e:
-                    sys.stderr.write('<ERROR>: %s\n' % e)
+                    sys.stderr.write('%s\n' % e)
 
-    def _exactModelMatch(self, otherParser):
+    def _exactModelMatch(self, otherParser,fout):
         assert isinstance(otherParser, Parser)
 
         unmatchedList = self.unmatchedProdList;
@@ -263,13 +264,13 @@ class Parser(object):
             if (brand is not None) and (model is not None):
                 if brand in otherDict:
                     if model in otherDict[brand]:
-                        print "Match1: %s/%s" % (brand,model)
+                        print  >>fout, "Match1: %s/%s" % (brand,model)
                         unmatchedList.remove(prod)
                         matchedList.append(prod)
                     else:
-                        print "No Model Match (%s): %s" % (model,prod.getLine())
+                        print  >>fout, "No Model Match (%s): %s" % (model,prod.getLine())
 
-    def _exactProductLineMatch(self, otherParser):
+    def _exactProductLineMatch(self, otherParser,fout):
         assert isinstance(otherParser, Parser)
 
         unmatchedList = self.unmatchedProdList;
@@ -281,19 +282,21 @@ class Parser(object):
             if (brand is not None) and (pline is not None):
                 if brand in otherDict:
                     if pline in otherDict[brand]:
-                        print "Match2: %s/%s" % (brand,pline)
+                        print  >>fout, "Match2: %s/%s" % (brand,pline)
                         unmatchedList.remove(prod)
                         matchedList.append(prod)
                     else:
-                        print "No Prod Line Match (%s): %s" % (pline,prod.getLine())
-
+                        print  >>fout, "No Prod Line Match (%s): %s" % (pline,prod.getLine())
+    
     def match(self, comparisonParser):
         assert isinstance(comparisonParser, Parser)
 
-        self._exactModelMatch(comparisonParser)
-        self._exactProductLineMatch(comparisonParser)
-        print "=" * 30
-        print "Num matches:    %d" % len(self.matchedProdList)
-        print "Num no matches: %d" % len(self.unmatchedProdList)
+        with open(self.infofile, "w") as fout:
+            self._exactModelMatch(comparisonParser,fout)
+            self._exactProductLineMatch(comparisonParser,fout)
+        
+            print >>fout, "=" * 30
+            print >>fout, "Num matches:    %d" % len(self.matchedProdList)
+            print >>fout, "Num no matches: %d" % len(self.unmatchedProdList)
                 
           

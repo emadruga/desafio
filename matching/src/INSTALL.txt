@@ -1,0 +1,96 @@
+- construção de um interpretador('parser') para a descrição de produtos de marketplace e matching
+- objetivo: identificar marca, modelo e linha de produto como criterio para matching
+- Importante: 
+- 1) Não analisadas linhas maiores de 500 caracteres, com vários produtos por linha (muitas ambiguidades no interpretador atual)
+- 2) Necessária adaptação do interpretador para comportar linhas de entrada multi-produtos (3 dias)
+
+* Pre-requisito:
+- instalar modulo PLY
+
+* Arquivos de Entrada (UNIX):
+
+a) base-smartphone-marketplace-utf8-unix.txt
+a.1) Quantidade de produtos (primeira palavra da linha)
+$ cut -d " " -f1 planilhas/base-smartphone-marketplace-utf8-unix.txt | sort | uniq -c | sort -n|tail
+      7 Kit
+      7 Monofone
+      8 Câmera
+      8 Tampa
+     11 Controle
+     12 Pen
+     14 Celular
+     20 Capa
+     35 Suporte
+   1074 Smartphone
+
+
+b) base-smartphone-matching-utf8-unix.txt
+b.1) Quantidade de produtos
+
+$ cut -d " " -f1 planilhas/base-smartphone-matching-utf8-unix.txt | sort | uniq -c |
+ sort -n|tail
+     29 LG
+     43 Tablet
+     46 Carregador
+     47 Samsung
+     47 iPad
+     50 Capa
+     67 Suporte
+    151 Celular
+    322 Smart
+   3803 Smartphone
+
+:: Nota: para ambiente Windows, remover "-unix" do nome do arquivo de entrada.
+
+* Execução (Windows) 
+C:\Users\Ewerton> cd matching\src
+C:\Users\Ewerton> python base_matching.py planilhas\base-smartphone-marketplace-utf8.txt planilhas\base-smartphone-matching-utf8.txt 2> error.log
+
+* Execução (Unix)
+$ cd matching/src
+$ python base_matching.py planilhas/base-smartphone-marketplace-utf8-unix.txt planilhas/base-smartphone-matching-utf8-unix.txt  2> error.log
+
+
+* Arquivos de saída
+- error.log: contém exceções do interpretador, necessárias para evoluir o interpretador e identificar ainda mais formas diferentes de detalhar um produto.
+- myParser_Market_MatchingParser.dump: tabelas <marca,modelo> e <marca,linha de produto> da base de Marketplace
+- myParser_Offer_MatchingParser.info: registro de produtos na base de Matching com e sem sucesso de matching
+
+* Resultados 1: numero de smartphones reconhecidos pelo interpretador na versão atual:
+
+== Base Marketplace ==========
+==============================
+smartphone: 975
+Num brands: 975
+Num product lines: 975
+Num models: 400
+==============================
+celular smartphone: 6
+Num brands: 6
+Num product lines: 6
+Num models: 6
+==============================
+
+
+== Base Matching  ==========
+==============================
+smartphone: 3459
+Num brands: 3459
+Num product lines: 3459
+Num models: 1349
+==============================
+celular smartphone: 114
+Num brands: 114
+Num product lines: 114
+Num models: 81
+==============================
+
+* Resultados 2: numero de produtos com e sem matching na base Marketplace
+==============================
+Num matches:    1784
+Num no matches: 1799
+
+* Conclusão
+
+Uma dificuldade é determinar qual a proporção dos insucessos se deve a não existir de fato um produto equivalente na base de Marketplace. Sabe-se de
+Com algoritmo simplificado de matching baseado em 

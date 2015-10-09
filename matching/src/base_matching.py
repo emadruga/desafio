@@ -465,9 +465,5 @@ if __name__ == '__main__':
     offers.run()
     offers.dump()
     offers.match(market)
-    print "================"
-    print "1) Num Prod Lines: %d"% market.countProductLine;
-    print "   Num Models:     %d"% market.countModel;
-    print "2) Num Prod Lines: %d"% offers.countProductLine;
-    print "   Num Models:     %d"% offers.countModel;
+
     
