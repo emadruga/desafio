@@ -1,8 +1,45 @@
-- construção de um interpretador('parser') para a descrição de produtos de marketplace e matching
-- objetivo: identificar marca, modelo e linha de produto como criterio para matching
+
+Relatório Técnico
+===========
+
+* Definição do Desafio:
+
+Fornecidas as duas bases de produtos, o desafio consiste em fazer o
+matching dos produtos na base de matching com os produtos na base de
+marketplace
+
+- Solução: construção de um interpretador('parser') para a descrição
+  de produtos de marketplace e matching
+  
+- Estratégia: identificar marca, modelo e linha de produto como criterio
+  para matching
+  
 - Importante: 
-- 1) Não analisadas linhas maiores de 500 caracteres, com vários produtos por linha (muitas ambiguidades no interpretador atual)
-- 2) Necessária adaptação do interpretador para comportar linhas de entrada multi-produtos (3 dias)
+
+- 1) Não analisadas linhas maiores de 500 caracteres, com vários
+  produtos por linha (muitas ambiguidades no interpretador atual)
+  
+
+- 2) Necessária adaptação do interpretador para comportar linhas de
+  entrada multi-produtos (aproxim. 3 dias)
+  
+
+* Introdução:
+
+Optamos pela implementação em Python de um interpretador simplificado
+de descrição de produto como solução ao problema. Esta opção permite a
+identificação de todos os atributos relevantes na descrição de um
+produto, fazendo-o de maneira bastante flexível com relação a
+estrutura (ou falta de) de definição de um produto.
+
+Com o algoritmo simplificado de matching baseado apenas em "exact match"
+de marca, linha de produto e modelo de uma base com relação a outra,
+chegou-se a uma taxa de sucesso numérica por volta de 50%. Esta
+precisão pode ser bastante melhorada com implementação de técnicas de
+"similaridade" de strings. aplicados a estes três e todos os demais atributos.
+
+* Repositório:
+https://github.com/emadruga/desafio
 
 * Pre-requisito:
 - instalar modulo PLY
@@ -26,9 +63,7 @@ $ cut -d " " -f1 planilhas/base-smartphone-marketplace-utf8-unix.txt | sort | un
 
 b) base-smartphone-matching-utf8-unix.txt
 b.1) Quantidade de produtos
-
-$ cut -d " " -f1 planilhas/base-smartphone-matching-utf8-unix.txt | sort | uniq -c |
- sort -n|tail
+$ cut -d " " -f1 planilhas/base-smartphone-matching-utf8-unix.txt | sort | uniq -c | sort -n|tail
      29 LG
      43 Tablet
      46 Carregador
@@ -40,22 +75,24 @@ $ cut -d " " -f1 planilhas/base-smartphone-matching-utf8-unix.txt | sort | uniq 
     322 Smart
    3803 Smartphone
 
-:: Nota: para ambiente Windows, remover "-unix" do nome do arquivo de entrada.
-
-* Execução (Windows) 
-C:\Users\Ewerton> cd matching\src
-C:\Users\Ewerton> python base_matching.py planilhas\base-smartphone-marketplace-utf8.txt planilhas\base-smartphone-matching-utf8.txt 2> error.log
-
 * Execução (Unix)
 $ cd matching/src
-$ python base_matching.py planilhas/base-smartphone-marketplace-utf8-unix.txt planilhas/base-smartphone-matching-utf8-unix.txt  2> error.log
+$ python base_matching.py planilhas/base-smartphone-marketplace-utf8-unix.txt   planilhas/base-smartphone-matching-utf8-unix.txt  2> error.log
 
+:: Nota: para ambiente Windows, remover "-unix" do nome dos arquivos de entrada.
 
 * Arquivos de saída
-- error.log: contém exceções do interpretador, necessárias para evoluir o interpretador e identificar ainda mais formas diferentes de detalhar um produto.
-- myParser_Market_MatchingParser.dump: tabelas <marca,modelo> e <marca,linha de produto> da base de Marketplace
-- myParser_Offer_MatchingParser.info: registro de produtos na base de Matching com e sem sucesso de matching
 
+- error.log: contém exceções do interpretador, necessárias para
+evoluir o interpretador e identificar ainda mais formas diferentes de
+detalhar um produto.
+
+- myParser_Market_MatchingParser.dump: tabelas <marca,modelo> e
+  <marca,linha de produto> da base de Marketplace
+  
+- myParser_Offer_MatchingParser.info: registro de produtos na base de
+  Matching com e sem sucesso de matching
+  
 * Resultados 1: numero de smartphones reconhecidos pelo interpretador na versão atual:
 
 == Base Marketplace ==========
@@ -102,7 +139,7 @@ Marketplace. Sabe-se de produtos que de fato existem em uma base e não
 existem na outra, como smartphones da Apple. Entretanto, ao analisar
 as tabelas nos arquivos de dump e comparando-as com os registros no
 arquivo de informações, vê-se que existem muitos modelos e linhas de
-produto que diferem de uma base à outra por poucos caracteres.
+produto cujos nomes diferem de uma base à outra por poucos caracteres.
 
 Assim, a utilização de um algoritmo de "distância" de strings
 aumentará a taxa de sucesso de comparação de produtos. Além disto,
