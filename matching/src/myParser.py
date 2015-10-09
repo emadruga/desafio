@@ -114,13 +114,14 @@ class Parser(object):
 
     def __init__(self, **kw):
         self.debug = kw.get('debug', 0)
-        self.names = { }
         self.filename = kw.get('filename',0)
+        self.tag = kw.get('tag',0)
         try:
-            modname = os.path.split(os.path.splitext(__file__)[0])[1] + "_" + self.__class__.__name__
+            modname = os.path.split(os.path.splitext(__file__)[0])[1] + "_" + self.tag + "_" + self.__class__.__name__
         except:
             modname = "parser"+"_"+self.__class__.__name__
-        self.debugfile = modname + ".dbg"
+        self.debugfile = modname + "_" + ".dbg"
+        self.dumpfile = modname + "_" + ".dump"
         self.tabmodule = modname + "_" + "parsetab"
         self.countProductLine = 0
         self.countModel       = 0
@@ -205,14 +206,15 @@ class Parser(object):
                 self.unmatchedProdList.append(prod)
         
     def dump(self):
-        print ">"*20
-        pprint.pprint(self.productModelDict)
-        print "<"*20
-        pprint.pprint(self.productLineDict)
-        print "=" * 30
-        print "Num brands: %d" % self.countBrand
-        print "Num product lines: %d" % self.countProductLine
-        print "Num models: %d" % self.countModel
+        with open(self.dumpfile, "w") as fout:
+            print >>fout, ">"*20
+            pprint.pprint(self.productModelDict, fout)
+            print >>fout, "<"*20
+            pprint.pprint(self.productLineDict, fout)
+            print >>fout, "=" * 30
+            print >>fout,"Num brands: %d" % self.countBrand
+            print >>fout,"Num product lines: %d" % self.countProductLine
+            print >>fout,"Num models: %d" % self.countModel
         
     def run(self):
         attribList = None

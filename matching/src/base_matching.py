@@ -458,10 +458,10 @@ if __name__ == '__main__':
         file1 = sys.argv[1]
     if len(sys.argv) > 2:
         file2 = sys.argv[2]
-    market = MatchingParser(debug = 0, filename = file1)
+    market = MatchingParser(debug = 0, filename = file1, tag = 'Market')
     market.run()
     market.dump()
-    offers = MatchingParser(debug = 0, filename = file2)
+    offers = MatchingParser(debug = 0, filename = file2, tag = 'Offer')
     offers.run()
     offers.dump()
     offers.match(market)
