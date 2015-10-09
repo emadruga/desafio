@@ -1,6 +1,9 @@
 myParser.pyc
-myParser_MatchingParser_parsetab.py 
-myParser_MatchingParser_parsetab.pyc
+myParser_Market_MatchingParser_.dump
+myParser_Market_MatchingParser_parsetab.py
+myParser_Offer_MatchingParser_.dump
+myParser_Offer_MatchingParser_parsetab.py
+planilhas/sample-utf8.txt
 error.log
 info.log
 
