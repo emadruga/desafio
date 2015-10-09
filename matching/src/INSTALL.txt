@@ -92,5 +92,20 @@ Num no matches: 1799
 
 * Conclusão
 
-Uma dificuldade é determinar qual a proporção dos insucessos se deve a não existir de fato um produto equivalente na base de Marketplace. Sabe-se de
-Com algoritmo simplificado de matching baseado em 
+Com algoritmo simplificado de matching baseado em "exact match" de
+marca, linha de produto e modelo de uma base com relação a outra,
+chegou-se a uma taxa de sucesso numérica por volta de 50%.
+
+Uma dificuldade é determinar qual a proporção dos insucessos se deve a
+não existir de fato um produto equivalente na base de
+Marketplace. Sabe-se de produtos que de fato existem em uma base e não
+existem na outra, como smartphones da Apple. Entretanto, ao analisar
+as tabelas nos arquivos de dump e comparando-as com os registros no
+arquivo de informações, vê-se que existem muitos modelos e linhas de
+produto que diferem de uma base à outra por poucos caracteres.
+
+Assim, a utilização de um algoritmo de "distância" de strings
+aumentará a taxa de sucesso de comparação de produtos. Além disto,
+comparando outros atributos de produtos que sejam relevantes, e
+atribuindo um escore pra cada comparação de atributo bem sucedida,
+temos confiança de ultrapassar a taxa de 90% de sucesso.
