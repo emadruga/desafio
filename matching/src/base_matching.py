@@ -449,15 +449,28 @@ class MatchingParser(Parser):
             #print "Syntax error at EOF"
             raise ParserException ( type    = 'Parser Exception',
                                     message ="Syntax error at EOF")
+    def unitTest(self,line):
+        prodList = yacc.parse(line)
+        self.processList(prodList,line)
+        self.prepareForMatching(prodList,line)
+        assert prodList[0].getProductType() == 'smartphone'
+        assert prodList[0].getProductBrand() == 'samsung'
+        assert prodList[0].getProductModel() == 'A999'
+        assert prodList[0].getProductLine() == 'galaxy s6'
 
+        
         
 if __name__ == '__main__':
 
-    file = './planilhas/sample-utf8.txt'
+    testfile = './planilhas/sample-utf8.txt'
     if len(sys.argv) > 1:
         file1 = sys.argv[1]
     if len(sys.argv) > 2:
         file2 = sys.argv[2]
+
+    test =  MatchingParser(debug = 0, filename = testfile, tag = 'Test')
+    test.unitTest("smartphone samsung galaxy s6 A999 dual chip");
+
     market = MatchingParser(debug = 0, filename = file1, tag = 'Market')
     market.run()
     market.dump()
