@@ -73,25 +73,29 @@ class Product(object):
     def getLine(self):
         return self._line
         
-    def getProductName(self):
+    def getProductType(self):
+        # 'smartphone','smart tv','ps3 console', etc
         response = None
         if self._product is not None:
             response = self._product.get_value()
         return response
         
     def getProductLine(self):
+        # 'galaxy s4', 'lumia 430 duo', etc.
         response = None
         if self._product_line is not None:
             response = self._product_line.get_value()
         return response
         
     def getProductBrand(self):
+        # 'samsung','nokia','apple', etc
         response = None
         if self._brand is not None:
             response =  self._brand.get_value()
         return response
         
     def getProductModel(self):
+        # 'a1022','xt401', etc
         response = None
         if self._model is not None:
             response = self._model.get_value()
@@ -120,14 +124,12 @@ class Parser(object):
             modname = os.path.split(os.path.splitext(__file__)[0])[1] + "_" + self.tag + "_" + self.__class__.__name__
         except:
             modname = "parser"+"_"+self.__class__.__name__
-        self.debugfile = modname + "_" + ".dbg"
-        self.dumpfile = modname + "_" + ".dump"
+        self.debugfile = modname + ".dbg"
+        self.dumpfile = modname + ".dump"
         self.tabmodule = modname + "_" + "parsetab"
-        self.countProductLine = 0
-        self.countModel       = 0
-        self.countBrand       = 0
         self.productModelDict     = AutoVivification()
         self.productLineDict      = AutoVivification()
+        self.statsDict            = AutoVivification()
         self.unmatchedProdList = []
         self.matchedProdList = []
 
@@ -197,12 +199,24 @@ class Parser(object):
         if prodList is not None:
             for prod in prodList:
                 prod.updateInfo(line)
+                prodType = prod.getProductType()
+                if prodType not in self.statsDict:
+                     self.statsDict[prodType]['type']        = 1
+                     self.statsDict[prodType]['brand']       = 0
+                     self.statsDict[prodType]['productLine'] = 0
+                     self.statsDict[prodType]['model']       = 0
+                else:
+                     self.statsDict[prodType]['type']        += 1
+                    
                 if prod.getProductBrand() is not None:
-                    self.countBrand += 1
+                    self.statsDict[prodType]['brand']       += 1
+                    
                 if prod.getProductLine() is not None:
-                    self.countProductLine += 1
+                    self.statsDict[prodType]['productLine'] += 1
+                    
                 if prod.getProductModel() is not None:
-                    self.countModel += 1
+                    self.statsDict[prodType]['model']       += 1
+
                 self.unmatchedProdList.append(prod)
         
     def dump(self):
@@ -211,10 +225,12 @@ class Parser(object):
             pprint.pprint(self.productModelDict, fout)
             print >>fout, "<"*20
             pprint.pprint(self.productLineDict, fout)
-            print >>fout, "=" * 30
-            print >>fout,"Num brands: %d" % self.countBrand
-            print >>fout,"Num product lines: %d" % self.countProductLine
-            print >>fout,"Num models: %d" % self.countModel
+            for prodType in self.statsDict:
+                print >>fout, "=" * 30
+                print >>fout,"%s: %d"         % (prodType, self.statsDict[prodType]['type'])
+                print >>fout,"Num brands: %d" % self.statsDict[prodType]['brand']
+                print >>fout,"Num product lines: %d" %  self.statsDict[prodType]['productLine']
+                print >>fout,"Num models: %d" %  self.statsDict[prodType]['model']
         
     def run(self):
         attribList = None
