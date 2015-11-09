@@ -148,6 +148,8 @@ Numero de Modelo - Base Marketplace:
         'e615f': ['Smartphone LG Optimus L5 E615f Dual Chip Rosa Webfones\n',
                   'Smartphone LG Optimus L5 E615f Dual Chip Frete Gratis Webfones\n'],
 
+Discussão: Modelo e612 (Base Market) pode ser considerado um "match" para e615 (Base Matching)
+
 Assim, a utilização de um algoritmo de "distância" de strings
 aumentará a taxa de sucesso de comparação de produtos. Além disto,
 comparando outros atributos de produto que sejam relevantes, e
