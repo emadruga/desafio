@@ -139,10 +139,17 @@ Marketplace. Sabe-se de produtos que de fato existem em uma base e não
 existem na outra, como smartphones da Apple. Entretanto, ao analisar
 as tabelas nos arquivos de dump e comparando-as com os registros no
 arquivo de informações, vê-se que existem muitos modelos e linhas de
-produto cujos nomes diferem de uma base à outra por poucos caracteres.
+produto que diferem de uma base à outra por poucos caracteres:
+
+Numero de Modelo - Base Matching:
+	No Model Match (e615): Smartphone LG OPTIMUS L5 DUAL E615 Desbloqueado Preto
+	
+Numero de Modelo - Base Marketplace:
+        'e615f': ['Smartphone LG Optimus L5 E615f Dual Chip Rosa Webfones\n',
+                  'Smartphone LG Optimus L5 E615f Dual Chip Frete Gratis Webfones\n'],
 
 Assim, a utilização de um algoritmo de "distância" de strings
 aumentará a taxa de sucesso de comparação de produtos. Além disto,
-comparando outros atributos de produtos que sejam relevantes, e
+comparando outros atributos de produto que sejam relevantes, e
 atribuindo um escore pra cada comparação de atributo bem sucedida,
 temos confiança de ultrapassar a taxa de 90% de sucesso.
