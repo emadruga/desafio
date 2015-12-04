@@ -237,9 +237,8 @@ class Parser(object):
         attribList = None
         with open(self.filename) as fp:
             for line in fp:
-                line.rstrip('\n')
                 #remove accents - input to normalize must be unicode
-                unicode_line  = line.decode('utf8')
+                unicode_line  = line.rstrip().decode('utf8')
                 nfkd_line     = unicodedata.normalize('NFKD',unicode_line)
                 ascii_line    = nfkd_line.encode('ASCII', 'ignore')
                 #print "------------------"
@@ -269,7 +268,7 @@ class Parser(object):
                         matchedList.append(prod)
                     else:
                         print  >>fout, "No Model Match (%s): %s" % (model,prod.getLine())
-
+                        
     def _exactProductLineMatch(self, otherParser,fout):
         assert isinstance(otherParser, Parser)
 
@@ -299,4 +298,20 @@ class Parser(object):
             print >>fout, "Num matches:    %d" % len(self.matchedProdList)
             print >>fout, "Num no matches: %d" % len(self.unmatchedProdList)
                 
-          
+    def dumpProdList(self):
+        unmatchedList = self.unmatchedProdList;
+        for prod in unmatchedList:
+            artifact = prod.getProductType()
+            brand    = prod.getProductBrand()
+            pline    = prod.getProductLine()
+            refCode  = prod.getProductModel()
+            if (artifact is None):
+                artifact = "<Sem Artefato>"
+            if (brand is None):
+                brand = "<Sem Marca>"
+            if (pline is None):
+                pline = "<Sem Modelo>"
+            if (refCode is None):
+                refCode = "<Sem Cod Referencia>"
+            print  "%s;%s;%s;%s;%s" % (prod.getLine(),"Telefonia", artifact.title(),
+                                       brand.title(),brand.upper()+ " " + pline.upper())
