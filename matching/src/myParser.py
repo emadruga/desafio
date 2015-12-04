@@ -314,4 +314,4 @@ class Parser(object):
             if (refCode is None):
                 refCode = "<Sem Cod Referencia>"
             print  "%s;%s;%s;%s;%s" % (prod.getLine(),"Telefonia", artifact.title(),
-                                       brand.title(),brand.upper()+ " " + pline.upper())
+                                       brand.title(),pline.upper())
