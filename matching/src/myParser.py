@@ -80,7 +80,7 @@ class Product(object):
             response = self._product.get_value()
         return response
         
-    def getProductLine(self):
+    def getModel(self):
         # 'galaxy s4', 'lumia 430 duo', etc.
         response = None
         if self._model is not None:
@@ -212,7 +212,7 @@ class Parser(object):
                 if prod.getProductBrand() is not None:
                     self.statsDict[prodType]['brand']       += 1
                     
-                if prod.getProductLine() is not None:
+                if prod.getModel() is not None:
                     self.statsDict[prodType]['model'] += 1
                     
                 if prod.getProductRefcode() is not None:
@@ -269,7 +269,7 @@ class Parser(object):
                     else:
                         print  >>fout, "No Refcode Match (%s): %s" % (refcode,prod.getLine())
                         
-    def _exactProductLineMatch(self, otherParser,fout):
+    def _exactModelMatch(self, otherParser,fout):
         assert isinstance(otherParser, Parser)
 
         unmatchedList = self.unmatchedProdList;
@@ -277,7 +277,7 @@ class Parser(object):
         otherDict = otherParser.modelDict
         for prod in unmatchedList:
             brand = prod.getProductBrand()
-            pline = prod.getProductLine()
+            pline = prod.getModel()
             if (brand is not None) and (pline is not None):
                 if brand in otherDict:
                     if pline in otherDict[brand]:
@@ -292,7 +292,7 @@ class Parser(object):
 
         with open(self.infofile, "w") as fout:
             self._exactRefcodeMatch(comparisonParser,fout)
-            self._exactProductLineMatch(comparisonParser,fout)
+            self._exactModelMatch(comparisonParser,fout)
         
             print >>fout, "=" * 30
             print >>fout, "Num matches:    %d" % len(self.matchedProdList)
@@ -303,7 +303,7 @@ class Parser(object):
         for prod in unmatchedList:
             artifact = prod.getProductType()
             brand    = prod.getProductBrand()
-            pline    = prod.getProductLine()
+            pline    = prod.getModel()
             refCode  = prod.getProductRefcode()
             if (artifact is None):
                 artifact = "<Sem Artefato>"

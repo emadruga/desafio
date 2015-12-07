@@ -456,7 +456,7 @@ class MatchingParser(Parser):
         assert prodList[0].getProductType() == 'smartphone'
         assert prodList[0].getProductBrand() == 'samsung'
         assert prodList[0].getProductRefcode() == 'A999'
-        assert prodList[0].getProductLine() == 'galaxy s6'
+        assert prodList[0].getModel() == 'galaxy s6'
 
         
         
