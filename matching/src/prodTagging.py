@@ -9,9 +9,9 @@ class MatchingParser(Parser):
         'BRAND','PRODUCT','TECHNOLOGY', 'COLOR','NUMCHIP',
         'ATTRIB','NUMBER','FLOAT','SEP', 'UNLOCKED','GIGABYTES',
         'MP','INCHES','PROVIDER','OS_NAME','GPS','VENDOR',
-        'COMMON_PRODUCT_LINE_SAMSUNG','SMARTPHONE','WATERPROOF',
-        'COMMON_PRODUCT_LINE_SONY','GENERATION', 'ORDINAL',
-        'COMMON_PRODUCT_LINE_MOTOROLA','LPAREN','RPAREN',
+        'COMMON_MODEL_SAMSUNG','SMARTPHONE','WATERPROOF',
+        'COMMON_MODEL_SONY','GENERATION', 'ORDINAL',
+        'COMMON_MODEL_MOTOROLA','LPAREN','RPAREN',
         'PROCESSOR_TYPE',
         'PROCESSOR',
         # 'GHZ',
@@ -88,15 +88,15 @@ class MatchingParser(Parser):
         r'android|ios|windows\s+phone|windows'
         return t
 
-    def t_COMMON_PRODUCT_LINE_SAMSUNG(self,t):
+    def t_COMMON_MODEL_SAMSUNG(self,t):
         r'galaxy'
         return t
 
-    def t_COMMON_PRODUCT_LINE_SONY(self,t):
+    def t_COMMON_MODEL_SONY(self,t):
          r'xperia'
          return t
         
-    def t_COMMON_PRODUCT_LINE_MOTOROLA(self,t):
+    def t_COMMON_MODEL_MOTOROLA(self,t):
          r'moto\s+g|moto\s+maxx|moto\b'
          return t
 
@@ -218,10 +218,10 @@ class MatchingParser(Parser):
         if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
             p[0] += p[3]
             
-    def p_product_id_common_product_lines(self, p):
+    def p_product_id_common_models(self, p):
         """
-        product_id :   BRAND common_product_lines attribute_list
-                   |   common_product_lines attribute_list
+        product_id :   BRAND common_models attribute_list
+                   |   common_models attribute_list
         """
         if len(p) == 3:
             p[0] = p[1]
@@ -232,21 +232,21 @@ class MatchingParser(Parser):
             if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
                 p[0] += p[3]
 
-    def p_common_product_lines_samsung(self, p):
+    def p_common_models_samsung(self, p):
         """
-        common_product_lines : COMMON_PRODUCT_LINE_SAMSUNG
+        common_models : COMMON_MODEL_SAMSUNG
         """
         p[0] =  [ ProductAttribute('brand', 'samsung'), ProductAttribute('model', p[1]) ]
 
-    def p_common_product_lines_sony(self, p):
+    def p_common_models_sony(self, p):
         """
-        common_product_lines : COMMON_PRODUCT_LINE_SONY
+        common_models : COMMON_MODEL_SONY
         """
         p[0] =  [ ProductAttribute('brand', 'sony'), ProductAttribute('model', p[1]) ]
 
-    def p_common_product_lines_motorola(self, p):
+    def p_common_models_motorola(self, p):
         """
-        common_product_lines : COMMON_PRODUCT_LINE_MOTOROLA
+        common_models : COMMON_MODEL_MOTOROLA
         """
         p[0] =  [ ProductAttribute('brand', 'motorola'), ProductAttribute('model', p[1]) ]
 
@@ -407,11 +407,11 @@ class MatchingParser(Parser):
         """
         p[0] = ProductAttribute('camera_resolution', p[1])
         
-    def p_attribute_common_product_lines(self, p):
+    def p_attribute_common_models(self, p):
         """
-        attribute : COMMON_PRODUCT_LINE_SAMSUNG
-                  | COMMON_PRODUCT_LINE_SONY
-                  | COMMON_PRODUCT_LINE_MOTOROLA
+        attribute : COMMON_MODEL_SAMSUNG
+                  | COMMON_MODEL_SONY
+                  | COMMON_MODEL_MOTOROLA
         """
         p[0] = ProductAttribute('model', p[1])
     

@@ -54,7 +54,7 @@ class Product(object):
     def __init__(self, list):
         self._alist = list
         self._product      =  None
-        self._product_line =  None
+        self._model =  None
         self._brand        =  None
         self._refcode        =  None
         self._line         =  None
@@ -62,7 +62,7 @@ class Product(object):
     def updateInfo(self,line):
         list = self.getAttributeList()
         self._product      =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'product'), None)
-        self._product_line =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'model'), None)
+        self._model =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'model'), None)
         self._brand        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
         self._refcode        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'refcode'), None)
         self._line         =  line
@@ -83,8 +83,8 @@ class Product(object):
     def getProductLine(self):
         # 'galaxy s4', 'lumia 430 duo', etc.
         response = None
-        if self._product_line is not None:
-            response = self._product_line.get_value()
+        if self._model is not None:
+            response = self._model.get_value()
         return response
         
     def getProductBrand(self):
@@ -129,7 +129,7 @@ class Parser(object):
         self.infofile = modname + ".info"
         self.tabmodule = modname + "_" + "parsetab"
         self.productRefcodeDict     = AutoVivification()
-        self.productLineDict      = AutoVivification()
+        self.modelDict      = AutoVivification()
         self.statsDict            = AutoVivification()
         self.unmatchedProdList = []
         self.matchedProdList = []
@@ -150,17 +150,17 @@ class Parser(object):
         for prod in prodList:
             attribList = prod._alist
             brand           = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
-            product_line    = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'model'), None)
-            if product_line is not None:
-                # get first product_line's index
-                product_line_value = ""
-                product_line_ix = next(i for i, f in enumerate(attribList) if f.get_type() == 'model')
+            model    = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'model'), None)
+            if model is not None:
+                # get first model's index
+                model_value = ""
+                model_ix = next(i for i, f in enumerate(attribList) if f.get_type() == 'model')
                 max_refcode_value = ""
-                count = product_line_ix
+                count = model_ix
                 refcode_value = None
                 refcode_value_ix = -1
                 contains_digits = re.compile('\d')
-                for f in attribList[product_line_ix:]:
+                for f in attribList[model_ix:]:
                     if isinstance(f,ProductAttribute) and f.get_type() in ('generic','model','generic_num'):
                         value = f.get_value()
                         # does attribute value contain digits ?
@@ -170,27 +170,27 @@ class Parser(object):
                                 refcode_value = f
                                 refcode_value_ix = count
                             else:
-                                product_line_value += " " + value
+                                model_value += " " + value
                         else:
-                            product_line_value += " " + value
+                            model_value += " " + value
                     else:
                         break
                     count += 1
-                if refcode_value is not None and product_line != refcode_value: 
+                if refcode_value is not None and model != refcode_value: 
                     refcode_value.set_type('refcode')
                     if brand is not None:
                         if  len(self.productRefcodeDict[brand.get_value()][refcode_value.get_value()]) == 0:
                             self.productRefcodeDict[brand.get_value()][refcode_value.get_value()] = [ line ]
                         else:
                             self.productRefcodeDict[brand.get_value()][refcode_value.get_value()].append(line)
-                if  product_line_value != "" and  product_line_value != product_line.get_value():
-                    product_line.set_value(product_line_value.lstrip())
-                    lineDict =  self.productLineDict
+                if  model_value != "" and  model_value != model.get_value():
+                    model.set_value(model_value.lstrip())
+                    lineDict =  self.modelDict
                     if brand is not None:
-                        if  len(lineDict[brand.get_value()][product_line.get_value()]) == 0:
-                            lineDict[brand.get_value()][product_line.get_value()] = [ line ]
+                        if  len(lineDict[brand.get_value()][model.get_value()]) == 0:
+                            lineDict[brand.get_value()][model.get_value()] = [ line ]
                         else:
-                            lineDict[brand.get_value()][product_line.get_value()].append(line)
+                            lineDict[brand.get_value()][model.get_value()].append(line)
 
                 # for attrib in attribList:
                 #     if isinstance(attrib,ProductAttribute):
@@ -225,7 +225,7 @@ class Parser(object):
             print >>fout, ">"*20
             pprint.pprint(self.productRefcodeDict, fout)
             print >>fout, "<"*20
-            pprint.pprint(self.productLineDict, fout)
+            pprint.pprint(self.modelDict, fout)
             for prodType in self.statsDict:
                 print >>fout, "=" * 30
                 print >>fout,"%s: %d"         % (prodType, self.statsDict[prodType]['type'])
@@ -274,7 +274,7 @@ class Parser(object):
 
         unmatchedList = self.unmatchedProdList;
         matchedList   = self.matchedProdList;
-        otherDict = otherParser.productLineDict
+        otherDict = otherParser.modelDict
         for prod in unmatchedList:
             brand = prod.getProductBrand()
             pline = prod.getProductLine()
