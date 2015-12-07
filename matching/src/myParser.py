@@ -277,15 +277,15 @@ class Parser(object):
         otherDict = otherParser.modelDict
         for prod in unmatchedList:
             brand = prod.getProductBrand()
-            pline = prod.getModel()
-            if (brand is not None) and (pline is not None):
+            model = prod.getModel()
+            if (brand is not None) and (model is not None):
                 if brand in otherDict:
-                    if pline in otherDict[brand]:
-                        print  >>fout, "Match2: %s/%s" % (brand,pline)
+                    if model in otherDict[brand]:
+                        print  >>fout, "Match2: %s/%s" % (brand,model)
                         unmatchedList.remove(prod)
                         matchedList.append(prod)
                     else:
-                        print  >>fout, "No Prod Line Match (%s): %s" % (pline,prod.getLine())
+                        print  >>fout, "No Model Match (%s): %s" % (model,prod.getLine())
     
     def match(self, comparisonParser):
         assert isinstance(comparisonParser, Parser)
@@ -303,15 +303,15 @@ class Parser(object):
         for prod in unmatchedList:
             artifact = prod.getProductType()
             brand    = prod.getProductBrand()
-            pline    = prod.getModel()
+            model    = prod.getModel()
             refCode  = prod.getProductRefcode()
             if (artifact is None):
                 artifact = "<Sem Artefato>"
             if (brand is None):
                 brand = "<Sem Marca>"
-            if (pline is None):
-                pline = "<Sem Modelo>"
+            if (model is None):
+                model = "<Sem Modelo>"
             if (refCode is None):
                 refCode = "<Sem Cod Referencia>"
             print  "%s;%s;%s;%s;%s" % (prod.getLine(),"Telefonia", artifact.title(),
-                                       brand.title(),pline.upper())
+                                       brand.title(),model.upper())
