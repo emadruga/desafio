@@ -62,7 +62,7 @@ class Product(object):
     def updateInfo(self,line):
         list = self.getAttributeList()
         self._product      =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'product'), None)
-        self._product_line =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'product_line'), None)
+        self._product_line =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'model'), None)
         self._brand        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
         self._refcode        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'refcode'), None)
         self._line         =  line
@@ -150,18 +150,18 @@ class Parser(object):
         for prod in prodList:
             attribList = prod._alist
             brand           = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
-            product_line    = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'product_line'), None)
+            product_line    = next((f for f in attribList if isinstance(f,ProductAttribute) and f.get_type() == 'model'), None)
             if product_line is not None:
                 # get first product_line's index
                 product_line_value = ""
-                product_line_ix = next(i for i, f in enumerate(attribList) if f.get_type() == 'product_line')
+                product_line_ix = next(i for i, f in enumerate(attribList) if f.get_type() == 'model')
                 max_refcode_value = ""
                 count = product_line_ix
                 refcode_value = None
                 refcode_value_ix = -1
                 contains_digits = re.compile('\d')
                 for f in attribList[product_line_ix:]:
-                    if isinstance(f,ProductAttribute) and f.get_type() in ('generic','product_line','generic_num'):
+                    if isinstance(f,ProductAttribute) and f.get_type() in ('generic','model','generic_num'):
                         value = f.get_value()
                         # does attribute value contain digits ?
                         if bool(contains_digits.search(value)): 
@@ -204,7 +204,7 @@ class Parser(object):
                 if prodType not in self.statsDict:
                      self.statsDict[prodType]['type']        = 1
                      self.statsDict[prodType]['brand']       = 0
-                     self.statsDict[prodType]['productLine'] = 0
+                     self.statsDict[prodType]['model'] = 0
                      self.statsDict[prodType]['refcode']       = 0
                 else:
                      self.statsDict[prodType]['type']        += 1
@@ -213,7 +213,7 @@ class Parser(object):
                     self.statsDict[prodType]['brand']       += 1
                     
                 if prod.getProductLine() is not None:
-                    self.statsDict[prodType]['productLine'] += 1
+                    self.statsDict[prodType]['model'] += 1
                     
                 if prod.getProductRefcode() is not None:
                     self.statsDict[prodType]['refcode']       += 1
@@ -221,7 +221,7 @@ class Parser(object):
                 self.unmatchedProdList.append(prod)
         
     def dump(self):
-        with open(self.dumpfile, "w") as fout:
+        with open(self.dumpfile, "w+") as fout:
             print >>fout, ">"*20
             pprint.pprint(self.productRefcodeDict, fout)
             print >>fout, "<"*20
@@ -230,7 +230,7 @@ class Parser(object):
                 print >>fout, "=" * 30
                 print >>fout,"%s: %d"         % (prodType, self.statsDict[prodType]['type'])
                 print >>fout,"Num brands: %d" % self.statsDict[prodType]['brand']
-                print >>fout,"Num product lines: %d" %  self.statsDict[prodType]['productLine']
+                print >>fout,"Num product lines: %d" %  self.statsDict[prodType]['model']
                 print >>fout,"Num refcodes: %d" %  self.statsDict[prodType]['refcode']
         
     def run(self):

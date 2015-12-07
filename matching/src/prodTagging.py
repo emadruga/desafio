@@ -213,7 +213,7 @@ class MatchingParser(Parser):
         """
         p[0] = [
             ProductAttribute('brand', p[1]),
-            ProductAttribute('product_line', p[2]),
+            ProductAttribute('model', p[2]),
         ] 
         if isinstance(p[3],(list,tuple)) and len(p[3]) > 0:
             p[0] += p[3]
@@ -236,19 +236,19 @@ class MatchingParser(Parser):
         """
         common_product_lines : COMMON_PRODUCT_LINE_SAMSUNG
         """
-        p[0] =  [ ProductAttribute('brand', 'samsung'), ProductAttribute('product_line', p[1]) ]
+        p[0] =  [ ProductAttribute('brand', 'samsung'), ProductAttribute('model', p[1]) ]
 
     def p_common_product_lines_sony(self, p):
         """
         common_product_lines : COMMON_PRODUCT_LINE_SONY
         """
-        p[0] =  [ ProductAttribute('brand', 'sony'), ProductAttribute('product_line', p[1]) ]
+        p[0] =  [ ProductAttribute('brand', 'sony'), ProductAttribute('model', p[1]) ]
 
     def p_common_product_lines_motorola(self, p):
         """
         common_product_lines : COMMON_PRODUCT_LINE_MOTOROLA
         """
-        p[0] =  [ ProductAttribute('brand', 'motorola'), ProductAttribute('product_line', p[1]) ]
+        p[0] =  [ ProductAttribute('brand', 'motorola'), ProductAttribute('model', p[1]) ]
 
     def p_attribute_list(self, p):
         """
@@ -413,7 +413,7 @@ class MatchingParser(Parser):
                   | COMMON_PRODUCT_LINE_SONY
                   | COMMON_PRODUCT_LINE_MOTOROLA
         """
-        p[0] = ProductAttribute('product_line', p[1])
+        p[0] = ProductAttribute('model', p[1])
     
     def p_attribute_brand(self, p):
         """
@@ -466,7 +466,8 @@ if __name__ == '__main__':
 
     test =  MatchingParser(debug = 0, filename = testfile, tag = 'Test')
     test.unitTest("smartphone samsung galaxy s6 A999 dual chip");
-
+    test.dump()
+    
     market = MatchingParser(debug = 0, filename = file1, tag = 'TAGGING')
     market.run()
     market.dump()
