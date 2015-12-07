@@ -56,7 +56,7 @@ class Product(object):
         self._product      =  None
         self._product_line =  None
         self._brand        =  None
-        self._model        =  None
+        self._refcode        =  None
         self._line         =  None
 
     def updateInfo(self,line):
@@ -64,7 +64,7 @@ class Product(object):
         self._product      =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'product'), None)
         self._product_line =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'product_line'), None)
         self._brand        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'brand'), None)
-        self._model        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'model'), None)
+        self._refcode        =  next((f for f in list if isinstance(f,ProductAttribute) and f.get_type() == 'refcode'), None)
         self._line         =  line
 
     def getAttributeList(self):
@@ -94,11 +94,11 @@ class Product(object):
             response =  self._brand.get_value()
         return response
         
-    def getProductModel(self):
+    def getProductRefcode(self):
         # 'a1022','xt401', etc
         response = None
-        if self._model is not None:
-            response = self._model.get_value()
+        if self._refcode is not None:
+            response = self._refcode.get_value()
         return response
         
     def __repr__(self):
@@ -128,7 +128,7 @@ class Parser(object):
         self.dumpfile = modname + ".dump"
         self.infofile = modname + ".info"
         self.tabmodule = modname + "_" + "parsetab"
-        self.productModelDict     = AutoVivification()
+        self.productRefcodeDict     = AutoVivification()
         self.productLineDict      = AutoVivification()
         self.statsDict            = AutoVivification()
         self.unmatchedProdList = []
@@ -142,7 +142,7 @@ class Parser(object):
                   tabmodule=self.tabmodule)
 
     def processList(self, prodList,line):
-        # if available, find a model in the  product description
+        # if available, find a refcode in the  product description
         # grow the product line attribute with relevant info.
         if not isinstance(prodList,list):
             return
@@ -155,20 +155,20 @@ class Parser(object):
                 # get first product_line's index
                 product_line_value = ""
                 product_line_ix = next(i for i, f in enumerate(attribList) if f.get_type() == 'product_line')
-                max_model_value = ""
+                max_refcode_value = ""
                 count = product_line_ix
-                model_value = None
-                model_value_ix = -1
+                refcode_value = None
+                refcode_value_ix = -1
                 contains_digits = re.compile('\d')
                 for f in attribList[product_line_ix:]:
                     if isinstance(f,ProductAttribute) and f.get_type() in ('generic','product_line','generic_num'):
                         value = f.get_value()
                         # does attribute value contain digits ?
                         if bool(contains_digits.search(value)): 
-                            if (len(value) > len(max_model_value)) and len(value) > 3:
-                                max_model_value = value
-                                model_value = f
-                                model_value_ix = count
+                            if (len(value) > len(max_refcode_value)) and len(value) > 3:
+                                max_refcode_value = value
+                                refcode_value = f
+                                refcode_value_ix = count
                             else:
                                 product_line_value += " " + value
                         else:
@@ -176,13 +176,13 @@ class Parser(object):
                     else:
                         break
                     count += 1
-                if model_value is not None and product_line != model_value: 
-                    model_value.set_type('model')
+                if refcode_value is not None and product_line != refcode_value: 
+                    refcode_value.set_type('refcode')
                     if brand is not None:
-                        if  len(self.productModelDict[brand.get_value()][model_value.get_value()]) == 0:
-                            self.productModelDict[brand.get_value()][model_value.get_value()] = [ line ]
+                        if  len(self.productRefcodeDict[brand.get_value()][refcode_value.get_value()]) == 0:
+                            self.productRefcodeDict[brand.get_value()][refcode_value.get_value()] = [ line ]
                         else:
-                            self.productModelDict[brand.get_value()][model_value.get_value()].append(line)
+                            self.productRefcodeDict[brand.get_value()][refcode_value.get_value()].append(line)
                 if  product_line_value != "" and  product_line_value != product_line.get_value():
                     product_line.set_value(product_line_value.lstrip())
                     lineDict =  self.productLineDict
@@ -205,7 +205,7 @@ class Parser(object):
                      self.statsDict[prodType]['type']        = 1
                      self.statsDict[prodType]['brand']       = 0
                      self.statsDict[prodType]['productLine'] = 0
-                     self.statsDict[prodType]['model']       = 0
+                     self.statsDict[prodType]['refcode']       = 0
                 else:
                      self.statsDict[prodType]['type']        += 1
                     
@@ -215,15 +215,15 @@ class Parser(object):
                 if prod.getProductLine() is not None:
                     self.statsDict[prodType]['productLine'] += 1
                     
-                if prod.getProductModel() is not None:
-                    self.statsDict[prodType]['model']       += 1
+                if prod.getProductRefcode() is not None:
+                    self.statsDict[prodType]['refcode']       += 1
 
                 self.unmatchedProdList.append(prod)
         
     def dump(self):
         with open(self.dumpfile, "w") as fout:
             print >>fout, ">"*20
-            pprint.pprint(self.productModelDict, fout)
+            pprint.pprint(self.productRefcodeDict, fout)
             print >>fout, "<"*20
             pprint.pprint(self.productLineDict, fout)
             for prodType in self.statsDict:
@@ -231,7 +231,7 @@ class Parser(object):
                 print >>fout,"%s: %d"         % (prodType, self.statsDict[prodType]['type'])
                 print >>fout,"Num brands: %d" % self.statsDict[prodType]['brand']
                 print >>fout,"Num product lines: %d" %  self.statsDict[prodType]['productLine']
-                print >>fout,"Num models: %d" %  self.statsDict[prodType]['model']
+                print >>fout,"Num refcodes: %d" %  self.statsDict[prodType]['refcode']
         
     def run(self):
         attribList = None
@@ -251,23 +251,23 @@ class Parser(object):
                 except ParserException as e:
                     sys.stderr.write('%s\n' % e)
 
-    def _exactModelMatch(self, otherParser,fout):
+    def _exactRefcodeMatch(self, otherParser,fout):
         assert isinstance(otherParser, Parser)
 
         unmatchedList = self.unmatchedProdList;
         matchedList   = self.matchedProdList;
-        otherDict = otherParser.productModelDict
+        otherDict = otherParser.productRefcodeDict
         for prod in unmatchedList:
             brand = prod.getProductBrand()
-            model = prod.getProductModel()
-            if (brand is not None) and (model is not None):
+            refcode = prod.getProductRefcode()
+            if (brand is not None) and (refcode is not None):
                 if brand in otherDict:
-                    if model in otherDict[brand]:
-                        print  >>fout, "Match1: %s/%s" % (brand,model)
+                    if refcode in otherDict[brand]:
+                        print  >>fout, "Match1: %s/%s" % (brand,refcode)
                         unmatchedList.remove(prod)
                         matchedList.append(prod)
                     else:
-                        print  >>fout, "No Model Match (%s): %s" % (model,prod.getLine())
+                        print  >>fout, "No Refcode Match (%s): %s" % (refcode,prod.getLine())
                         
     def _exactProductLineMatch(self, otherParser,fout):
         assert isinstance(otherParser, Parser)
@@ -291,7 +291,7 @@ class Parser(object):
         assert isinstance(comparisonParser, Parser)
 
         with open(self.infofile, "w") as fout:
-            self._exactModelMatch(comparisonParser,fout)
+            self._exactRefcodeMatch(comparisonParser,fout)
             self._exactProductLineMatch(comparisonParser,fout)
         
             print >>fout, "=" * 30
@@ -304,7 +304,7 @@ class Parser(object):
             artifact = prod.getProductType()
             brand    = prod.getProductBrand()
             pline    = prod.getProductLine()
-            refCode  = prod.getProductModel()
+            refCode  = prod.getProductRefcode()
             if (artifact is None):
                 artifact = "<Sem Artefato>"
             if (brand is None):

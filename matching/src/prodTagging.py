@@ -455,7 +455,7 @@ class MatchingParser(Parser):
         self.prepareForMatching(prodList,line)
         assert prodList[0].getProductType() == 'smartphone'
         assert prodList[0].getProductBrand() == 'samsung'
-        assert prodList[0].getProductModel() == 'A999'
+        assert prodList[0].getProductRefcode() == 'A999'
         assert prodList[0].getProductLine() == 'galaxy s6'
         
 if __name__ == '__main__':
