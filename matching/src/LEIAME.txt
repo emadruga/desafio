@@ -2,6 +2,7 @@
 % awk '{ if (length($0) > 200 && length($0) < 300) print }' planilhas/base-smartphone-matching-utf8-unix.txt |  wc -l
 
 == Top 10 products: frequency by name
+% cut -d " " --fields 1,2 planilhas/telefonia-marcados.txt | sort | uniq -c | sort -rn | head
 % cut -d " " -f1 1-sample-multiline.txt | sort | uniq -c | sort -n|tail
    1 Tablet
    2 Câmera
