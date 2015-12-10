@@ -249,7 +249,8 @@ class Parser(object):
                         self.processList (productList, ascii_line)
                         self.prepareForMatching(productList, ascii_line)
                 except ParserException as e:
-                    sys.stderr.write('%s\n' % e)
+                    #sys.stderr.write('%s [%s]\n' % (e,ascii_line) )
+                    sys.stderr.write('%s\n' % e )
 
     def _exactRefcodeMatch(self, otherParser,fout):
         assert isinstance(otherParser, Parser)
